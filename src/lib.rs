@@ -1,8 +1,8 @@
 use directories::BaseDirs;
-use http::{Request, Response};
+use log::info;
 use std::{fs, io};
 
-const SUBDIR_NAME: &str = "ggmod";
+pub const SUBDIR_NAME: &str = "ggmod";
 
 fn download_path() -> Option<std::path::PathBuf> {
     Some(
@@ -15,16 +15,12 @@ fn download_path() -> Option<std::path::PathBuf> {
 
 pub fn check_download_path() -> Result<(), std::io::Error> {
     if let Some(path) = download_path() {
+        info!("Download path not found, creating");
         fs::DirBuilder::new().recursive(true).create(path)
     } else {
-        Err(io::Error::new(
-            io::ErrorKind::NotFound,
-            "download path not foudn",
-        ))
+        Err(io::Error::new(io::ErrorKind::NotFound, "Path inaccessible"))
     }
 }
-
-//fn download_mod(mod_id: usize) -> Result<std::path::PathBuf, &str> {}
 
 #[cfg(test)]
 mod test {
@@ -34,8 +30,8 @@ mod test {
     fn check_download_path_creates() {
         // TODO: This looks dumb fix it
         let path = download_path().unwrap();
-        fs::remove_dir(path.clone()).unwrap_or(());
+        fs::remove_dir(&path).unwrap_or(());
         check_download_path().unwrap();
-        fs::read_dir(path).unwrap();
+        fs::read_dir(&path).unwrap();
     }
 }
