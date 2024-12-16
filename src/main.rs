@@ -1,4 +1,5 @@
 use clap::{Parser, Subcommand};
+use ggmod::check_download_path;
 use std::path::PathBuf;
 
 #[derive(Parser)]
@@ -36,6 +37,9 @@ enum Commands {
 
 fn main() {
     let cli = Cli::parse();
+    check_download_path().unwrap_or_else(|e| {
+        panic!("Download path creation failed: {}", e);
+    });
     match &cli.command {
         Some(Commands::Download { install: list }) => {}
         Some(Commands::Install {}) => {}
