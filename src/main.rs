@@ -1,5 +1,5 @@
 use clap::{Parser, Subcommand};
-use ggmod::check_download_path;
+use ggmod::files::check_download_path;
 use std::path::PathBuf;
 
 #[derive(Parser)]
