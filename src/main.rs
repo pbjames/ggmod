@@ -1,5 +1,5 @@
 use clap::{Parser, Subcommand};
-use ggmod::{files::check_download_path, gamebanana::download};
+use ggmod::files::check_download_path;
 use std::path::PathBuf;
 
 #[derive(Parser)]
@@ -43,10 +43,7 @@ fn main() {
         panic!("Download path creation failed: {}", e);
     });
     match &cli.command {
-        Some(Commands::Download { mod_id, install }) => {
-            let hello = download(*mod_id).unwrap_or_else(|| panic!("no mod"));
-            println!("{}", format!("{:?}", hello));
-        }
+        Some(Commands::Download { mod_id, install }) => {}
         Some(Commands::Install {}) => {}
         Some(Commands::Uninstall {}) => {}
         None => {}
