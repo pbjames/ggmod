@@ -1,6 +1,9 @@
 use reqwest::blocking;
 use serde::{Deserialize, Serialize};
 
+// TODO: Refactor structs and json format so its less ugly
+// inconsistent endpoint alternative:
+// https://api.gamebanana.com/Core/Item/Data?itemtype=Mod&itemid={mod_id}&fields=Category().name,creator,date,description,downloads,Files().aFiles(),likes,name,Nsfw().bIsNsfw()&return_keys=true&format=json
 #[derive(Serialize, Deserialize, Debug)]
 pub struct GBCategory {
     _sIconUrl: String,
