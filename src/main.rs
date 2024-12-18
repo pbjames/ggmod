@@ -1,5 +1,5 @@
 use clap::{Parser, Subcommand};
-use ggmod::files::check_download_path;
+use ggmod::{files::check_download_path, gamebanana::download};
 use std::path::PathBuf;
 
 #[derive(Parser)]
@@ -27,6 +27,8 @@ enum Commands {
         /// Also install or no
         #[arg(short, long)]
         install: bool,
+        /// Mod ID
+        mod_id: usize,
     },
     /// dragon install
     Install {},
@@ -41,7 +43,10 @@ fn main() {
         panic!("Download path creation failed: {}", e);
     });
     match &cli.command {
-        Some(Commands::Download { install: list }) => {}
+        Some(Commands::Download { mod_id, install }) => {
+            let hello = download(*mod_id).unwrap_or_else(|| panic!("no mod"));
+            println!("{}", format!("{:?}", hello));
+        }
         Some(Commands::Install {}) => {}
         Some(Commands::Uninstall {}) => {}
         None => {}
