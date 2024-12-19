@@ -4,6 +4,8 @@ use std::{
     path,
 };
 
+use compress_tools::{uncompress_archive, Ownership};
+use log::info;
 use reqwest::blocking;
 use serde::{Deserialize, Serialize};
 
@@ -34,9 +36,9 @@ pub struct GBFile {
 }
 
 impl GBFile {
-    pub fn download_to(&self, path: path::PathBuf) -> Result<path::PathBuf> {
+    pub fn download_to<'a>(&self, path: &'a path::PathBuf) -> Result<&'a path::PathBuf> {
         let response = blocking::get(&self._sDownloadUrl)?;
-        let mut file = fs::File::create(&path)?;
+        let mut file = fs::File::create(path)?;
         let mut content = Cursor::new(response.bytes()?);
         io::copy(&mut content, &mut file)?;
         Ok(path)
@@ -44,10 +46,19 @@ impl GBFile {
 
     pub fn fetch(&self) -> Result<path::PathBuf> {
         let path = download_path().unwrap_or_default().join(&self._sFile);
-        if path.exists() && path.is_file() {
-            Ok(path)
+        let mut dir = path.clone();
+        dir.set_extension("");
+        if dir.exists() && dir.is_dir() {
+            Ok(dir)
         } else {
-            self.download_to(path)
+            self.download_to(&path)?;
+            let src = fs::File::open(&path)?;
+            uncompress_archive(src, &dir, Ownership::Preserve)?;
+            info!(
+                "{}",
+                format!("Archive {:?} decompressed to {:?}", path, dir)
+            );
+            Ok(dir)
         }
     }
 }
@@ -109,7 +120,34 @@ impl Mod {
         Ok(m)
     }
 
-    pub fn stage(&self) -> Result<()> {
-        todo!()
+    pub fn stage(&mut self) -> Result<()> {
+        match self.path.as_path().components().last() {
+            Some(dirpath) => {
+                dircpy::copy_dir(
+                    &self.path,
+                    check_gg_path().unwrap_or_default().join(dirpath),
+                )?;
+                self.staged = true;
+                Ok(())
+            }
+            None => Err(Box::new(io::Error::new(
+                io::ErrorKind::NotFound,
+                "Path inaccessible",
+            ))),
+        }
+    }
+
+    pub fn unstage(&mut self) -> Result<()> {
+        match self.path.as_path().components().last() {
+            Some(dirpath) => {
+                fs::remove_dir_all(check_gg_path().unwrap_or_default().join(dirpath))?;
+                self.staged = false;
+                Ok(())
+            }
+            None => Err(Box::new(io::Error::new(
+                io::ErrorKind::NotFound,
+                "Path inaccessible",
+            ))),
+        }
     }
 }
