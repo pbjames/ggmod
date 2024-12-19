@@ -4,7 +4,7 @@ use serde::Serialize;
 use std::{
     env::home_dir,
     fs,
-    io::{self, Read, Write},
+    io::{self, Cursor, Read, Write},
     path,
 };
 
@@ -36,6 +36,8 @@ pub fn check_registry() -> Result<path::PathBuf, io::Error> {
     if !reg_path.is_file() {
         info!("Write new registry.json");
         fs::File::create(&reg_path)?;
+        let file = fs::OpenOptions::new().append(true).open(&reg_path)?;
+        serde_json::to_writer(file, &Vec::<Mod>::new())?;
     }
     Ok(reg_path)
 }
@@ -55,7 +57,7 @@ pub fn register_mod(obj: &Mod) -> Result<(), io::Error> {
     let path = check_registry()?;
     let mut prev = load_mods(&path).unwrap_or_default();
     prev.append(&mut vec![obj.clone()]); // TODO: This wasteful
-    let file = fs::OpenOptions::new().append(true).open(path)?;
+    let file = fs::OpenOptions::new().write(true).open(path)?;
     Ok(serde_json::to_writer(file, &prev)?)
 }
 
