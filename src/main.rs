@@ -1,9 +1,8 @@
 use clap::{Parser, Subcommand};
 use ggmod::files::{check_registry, load_mods};
 use ggmod::gamebanana::{GBMod, Mod};
-use std::io;
+use std::io::{self, BufRead};
 use std::path::PathBuf;
-use std::process::exit;
 
 #[derive(Parser)]
 #[command(version, about, long_about = None)]
@@ -48,6 +47,7 @@ fn main() {
     let reg_path = check_registry().unwrap_or_else(|e| {
         panic!("{}", e);
     });
+    colog::init();
     match &cli.command {
         Some(Commands::Download { mod_id, install }) => {
             let gbmod = GBMod::build(*mod_id).expect("Couldn't get mod");
@@ -56,14 +56,11 @@ fn main() {
                 println!("{:?}", f._sFile);
             }
             print!("Choose index:");
-            let mut input = String::new();
-            //io::stdin()
-            //    .read_line(&mut input)
-            //    .expect("Unable to read line");
-            input = String::from("1");
-            let chosen_mod = Mod::build(*mod_id, gbmod, input.trim().parse().unwrap())
-                .expect("Couldn't download file");
-            exit(0);
+            let stdin = io::stdin();
+            let mut iterator = stdin.lock().lines();
+            let input = iterator.next().unwrap().unwrap();
+            let input = input.trim().parse::<usize>().unwrap() - 1;
+            let mut chosen_mod = Mod::build(*mod_id, gbmod, input).expect("Couldn't download file");
             if *install {
                 chosen_mod.stage().expect("Mod couldn't be staged");
             }
@@ -71,7 +68,7 @@ fn main() {
         Some(Commands::Install { mod_id }) => {}
         Some(Commands::Uninstall { mod_id }) => {}
         Some(Commands::List {}) => {
-            let mods: Vec<Mod> = load_mods(reg_path).expect("Mods couldn't be loaded");
+            let mods: Vec<Mod> = load_mods(&reg_path).expect("Mods couldn't be loaded");
             for m in mods {
                 println!("{}: {}", m.id, m.name)
             }

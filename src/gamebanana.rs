@@ -9,7 +9,7 @@ use log::info;
 use reqwest::blocking;
 use serde::{Deserialize, Serialize};
 
-use crate::{check_gg_path, download_path, register_object, registry_has_id};
+use crate::{check_gg_path, download_path, register_mod, registry_has_id};
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error + Send + Sync>>;
 
@@ -116,38 +116,28 @@ impl Mod {
             description: gbmod._sDescription,
             staged: false,
         };
-        register_object(&m)?;
+        register_mod(&m)?;
         Ok(m)
     }
 
     pub fn stage(&mut self) -> Result<()> {
-        match self.path.as_path().components().last() {
-            Some(dirpath) => {
-                dircpy::copy_dir(
-                    &self.path,
-                    check_gg_path().unwrap_or_default().join(dirpath),
-                )?;
-                self.staged = true;
-                Ok(())
-            }
-            None => Err(Box::new(io::Error::new(
-                io::ErrorKind::NotFound,
-                "Path inaccessible",
-            ))),
-        }
+        dircpy::copy_dir(
+            &self.path,
+            check_gg_path()
+                .unwrap_or_default()
+                .join(self.id.to_string()),
+        )?;
+        self.staged = true;
+        Ok(())
     }
 
     pub fn unstage(&mut self) -> Result<()> {
-        match self.path.as_path().components().last() {
-            Some(dirpath) => {
-                fs::remove_dir_all(check_gg_path().unwrap_or_default().join(dirpath))?;
-                self.staged = false;
-                Ok(())
-            }
-            None => Err(Box::new(io::Error::new(
-                io::ErrorKind::NotFound,
-                "Path inaccessible",
-            ))),
-        }
+        fs::remove_dir_all(
+            check_gg_path()
+                .unwrap_or_default()
+                .join(self.id.to_string()),
+        )?;
+        self.staged = false;
+        Ok(())
     }
 }

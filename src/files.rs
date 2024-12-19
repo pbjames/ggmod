@@ -1,7 +1,8 @@
 use directories::BaseDirs;
-use log::info;
+use log::{debug, info, trace, warn};
 use serde::Serialize;
 use std::{
+    env::home_dir,
     fs,
     io::{self, Read, Write},
     path,
@@ -39,31 +40,32 @@ pub fn check_registry() -> Result<path::PathBuf, io::Error> {
     Ok(reg_path)
 }
 
-pub fn load_mods(path: path::PathBuf) -> Option<Vec<Mod>> {
-    // TODO: Use serde_json::from_reader and writer
-    let mut file = fs::OpenOptions::new().read(true).open(path).ok()?;
-    let mut s_ptr = String::new();
-    file.read_to_string(&mut s_ptr).ok()?;
-    serde_json::from_str(&s_ptr).ok()?
+pub fn load_mods(path: &path::PathBuf) -> Option<Vec<Mod>> {
+    let file = fs::OpenOptions::new().read(true).open(path).unwrap();
+    Some(serde_json::from_reader(file).unwrap())
 }
 
 pub fn registry_has_id(mod_id: usize) -> Result<Option<Mod>, io::Error> {
     let path = check_registry()?;
-    let obj: Vec<Mod> = load_mods(path).unwrap_or_default();
+    let obj: Vec<Mod> = load_mods(&path).unwrap_or_default();
     Ok(obj.iter().find(|m| m.id == mod_id).cloned())
 }
 
-pub fn register_object<T: Serialize>(obj: T) -> Result<(), io::Error> {
-    // TODO: Use serde_json::from_reader and writer
+pub fn register_mod(obj: &Mod) -> Result<(), io::Error> {
     let path = check_registry()?;
-    let mut file = fs::OpenOptions::new().append(true).open(path)?;
-    writeln!(file, "{:?}", serde_json::to_string_pretty(&obj))
+    let mut prev = load_mods(&path).unwrap_or_default();
+    prev.append(&mut vec![obj.clone()]); // TODO: This wasteful
+    let file = fs::OpenOptions::new().append(true).open(path)?;
+    Ok(serde_json::to_writer(file, &prev)?)
 }
 
 pub fn check_gg_path() -> Option<path::PathBuf> {
     // TODO: This will probably need new entries
     let steamroot = [
-        path::PathBuf::from("~/.steam/root"),
+        directories::UserDirs::new()?
+            .home_dir()
+            .join(".steam")
+            .join("root"),
         path::PathBuf::from("C:\\Program Files (x86)\\Steam\\"),
     ]
     .into_iter()
@@ -78,6 +80,7 @@ pub fn check_gg_path() -> Option<path::PathBuf> {
             .join("Paks")
             .join("~mods");
         fs::DirBuilder::new().recursive(true).create(&path).ok()?;
+        info!("Found path {:?} for steam root", path);
         Some(path)
     } else {
         None
