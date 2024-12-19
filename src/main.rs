@@ -1,6 +1,6 @@
 use clap::{Parser, Subcommand};
-use ggmod::files::{check_registry, load_mods, registry_has_id};
-use ggmod::gamebanana::{GBMod, Mod};
+use ggmod::gamebanana::GBMod;
+use ggmod::modz::{check_registry, load_mods, registry_has_id, Mod};
 use std::io::{self, BufRead};
 use std::path::PathBuf;
 
@@ -51,7 +51,7 @@ fn main() {
     match &cli.command {
         Some(Commands::Download { mod_id, install }) => {
             let gbmod = GBMod::build(*mod_id).expect("Couldn't get mod");
-            let opts = gbmod.files();
+            let opts = &gbmod.files;
             for (i, f) in opts.iter().enumerate() {
                 println!("{} {:?}", (i + 1), f.file);
             }

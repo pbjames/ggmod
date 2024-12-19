@@ -9,13 +9,10 @@ use log::info;
 use reqwest::blocking;
 use serde::{Deserialize, Serialize};
 
-use crate::{check_gg_path, download_path, register_mod, registry_has_id};
+use crate::check_download_path;
 
-type Result<T> = std::result::Result<T, Box<dyn std::error::Error + Send + Sync>>;
+type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
-// TODO: Refactor structs and json format so its less ugly
-// inconsistent endpoint alternative:
-// https://api.gamebanana.com/Core/Item/Data?itemtype=Mod&itemid={mod_id}&fields=Category().name,creator,date,description,downloads,Files().aFiles(),likes,name,Nsfw().bIsNsfw()&return_keys=true&format=json
 #[derive(Serialize, Deserialize, Debug)]
 pub struct GBCategory {
     pub icon_url: String,
@@ -45,18 +42,17 @@ impl GBFile {
     }
 
     pub fn fetch(&self) -> Result<path::PathBuf> {
-        let path = download_path().unwrap_or_default().join(&self.file);
-        let mut dir = path.clone();
-        dir.set_extension("");
+        let file = check_download_path().unwrap_or_default().join(&self.file);
+        let dir = file.with_extension("");
         if dir.exists() && dir.is_dir() {
             Ok(dir)
         } else {
-            self.download_to(&path)?;
-            let src = fs::File::open(&path)?;
+            self.download_to(&file)?;
+            let src = fs::File::open(&file)?;
             uncompress_archive(src, &dir, Ownership::Preserve)?;
             info!(
                 "{}",
-                format!("Archive {:?} decompressed to {:?}", path, dir)
+                format!("Archive {:?} decompressed to {:?}", file, dir)
             );
             Ok(dir)
         }
@@ -72,20 +68,18 @@ pub struct GBMod {
 }
 
 impl GBMod {
-    pub fn files(&self) -> &Vec<GBFile> {
-        &self.files
-    }
     pub fn download_file(&self, idx: usize) -> Result<path::PathBuf> {
         self.files[idx].fetch()
     }
 
     pub fn build(id: usize) -> Result<GBMod> {
+        // INFO: Just in case they ever fix the key names
+        // https://api.gamebanana.com/Core/Item/Data?itemtype=Mod&itemid={mod_id}&fields=Category().name,creator,date,description,downloads,Files().aFiles(),likes,name,Nsfw().bIsNsfw()&return_keys=true&format=json
         let uri = format!(
-            "https://gamebanana.com/apiv6/Mod/{}?\
+            "https://gamebanana.com/apiv6/Mod/{id}?\
         _csvProperties=_sName,_aGame,_sProfileUrl,_aPreviewMedia,\
         _sDescription,_aSubmitter,_aCategory,_aSuperCategory,_aFiles,\
         _tsDateUpdated,_aAlternateFileSources,_bHasUpdates,_aLatestUpdates",
-            id
         );
         let resp = blocking::get(uri)?.text()?;
         Ok(serde_json::from_str::<GBMod>(
@@ -106,63 +100,5 @@ impl GBMod {
                 .replace("_sDownloadUrl", "download_url")
                 .replace("_sIconUrl", "icon_url"),
         )?)
-        //pub _bContainsExe: bool,
-        //pub _nDownloadCount: usize,
-        //pub _nFilesize: usize,
-        //pub _sAnalysisResultCode: String,
-        //pub _tsDateAdded: usize,
-        //pub _sMd5Checksum: String,
-        //pub file: String,
-        //pub _sDownloadUrl: String,
-    }
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct Mod {
-    pub id: usize,
-    pub character: String,
-    path: path::PathBuf,
-    pub name: String,
-    pub description: String,
-    pub staged: bool,
-}
-
-impl Mod {
-    pub fn get(id: usize) -> Option<Mod> {
-        registry_has_id(id).ok()?
-    }
-
-    pub fn build(id: usize, gbmod: GBMod, idx: usize) -> Result<Mod> {
-        let m = Mod {
-            id,
-            character: gbmod.category.name.clone(),
-            path: gbmod.download_file(idx)?,
-            name: gbmod.name,
-            description: gbmod.description,
-            staged: false,
-        };
-        register_mod(&m)?;
-        Ok(m)
-    }
-
-    pub fn stage(&mut self) -> Result<()> {
-        dircpy::copy_dir(
-            &self.path,
-            check_gg_path()
-                .unwrap_or_default()
-                .join(self.id.to_string()),
-        )?;
-        self.staged = true;
-        Ok(())
-    }
-
-    pub fn unstage(&mut self) -> Result<()> {
-        fs::remove_dir_all(
-            check_gg_path()
-                .unwrap_or_default()
-                .join(self.id.to_string()),
-        )?;
-        self.staged = false;
-        Ok(())
     }
 }
