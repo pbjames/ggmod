@@ -1,5 +1,5 @@
 use clap::{Parser, Subcommand};
-use ggmod::files::{check_registry, load_mods};
+use ggmod::files::{check_registry, load_mods, registry_has_id};
 use ggmod::gamebanana::{GBMod, Mod};
 use std::io::{self, BufRead};
 use std::path::PathBuf;
@@ -52,10 +52,10 @@ fn main() {
         Some(Commands::Download { mod_id, install }) => {
             let gbmod = GBMod::build(*mod_id).expect("Couldn't get mod");
             let opts = gbmod.files();
-            for f in opts {
-                println!("{:?}", f._sFile);
+            for (i, f) in opts.iter().enumerate() {
+                println!("{} {:?}", (i + 1), f.file);
             }
-            print!("Choose index:");
+            println!("Choose index:");
             let stdin = io::stdin();
             let mut iterator = stdin.lock().lines();
             let input = iterator.next().unwrap().unwrap();
@@ -65,8 +65,18 @@ fn main() {
                 chosen_mod.stage().expect("Mod couldn't be staged");
             }
         }
-        Some(Commands::Install { mod_id }) => {}
-        Some(Commands::Uninstall { mod_id }) => {}
+        Some(Commands::Install { mod_id }) => {
+            let mut chosen_mod = registry_has_id(*mod_id)
+                .expect("Invalid ID or registry (delete it)")
+                .expect("Couldn't find mod with that ID");
+            chosen_mod.stage().expect("Couldn't add mod to GGST");
+        }
+        Some(Commands::Uninstall { mod_id }) => {
+            let mut chosen_mod = registry_has_id(*mod_id)
+                .expect("Invalid ID or registry (delete it)")
+                .expect("Couldn't find mod with that ID");
+            chosen_mod.unstage().expect("Couldn't remove mod");
+        }
         Some(Commands::List {}) => {
             let mods: Vec<Mod> = load_mods(&reg_path).expect("Mods couldn't be loaded");
             for m in mods {

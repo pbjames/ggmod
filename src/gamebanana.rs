@@ -18,26 +18,26 @@ type Result<T> = std::result::Result<T, Box<dyn std::error::Error + Send + Sync>
 // https://api.gamebanana.com/Core/Item/Data?itemtype=Mod&itemid={mod_id}&fields=Category().name,creator,date,description,downloads,Files().aFiles(),likes,name,Nsfw().bIsNsfw()&return_keys=true&format=json
 #[derive(Serialize, Deserialize, Debug)]
 pub struct GBCategory {
-    pub _sIconUrl: String,
-    pub _sName: String,
+    pub icon_url: String,
+    pub name: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct GBFile {
-    pub _bContainsExe: bool,
-    pub _nDownloadCount: usize,
-    pub _nFilesize: usize,
-    pub _sAnalysisResultCode: String,
-    pub _tsDateAdded: usize,
-    pub _sMd5Checksum: String,
-    pub _sFile: String,
-    pub _sDownloadUrl: String,
-    pub _sDescription: String,
+    pub contains_exe: bool,
+    pub download_count: usize,
+    pub filesize: usize,
+    pub analysis_result_code: String,
+    pub date_added: usize,
+    pub md5: String,
+    pub file: String,
+    pub download_url: String,
+    pub description: String,
 }
 
 impl GBFile {
     pub fn download_to<'a>(&self, path: &'a path::PathBuf) -> Result<&'a path::PathBuf> {
-        let response = blocking::get(&self._sDownloadUrl)?;
+        let response = blocking::get(&self.download_url)?;
         let mut file = fs::File::create(path)?;
         let mut content = Cursor::new(response.bytes()?);
         io::copy(&mut content, &mut file)?;
@@ -45,7 +45,7 @@ impl GBFile {
     }
 
     pub fn fetch(&self) -> Result<path::PathBuf> {
-        let path = download_path().unwrap_or_default().join(&self._sFile);
+        let path = download_path().unwrap_or_default().join(&self.file);
         let mut dir = path.clone();
         dir.set_extension("");
         if dir.exists() && dir.is_dir() {
@@ -65,18 +65,18 @@ impl GBFile {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct GBMod {
-    pub _aCategory: GBCategory,
-    pub _aFiles: Vec<GBFile>,
-    pub _sName: String,
-    pub _sDescription: String,
+    pub category: GBCategory,
+    pub files: Vec<GBFile>,
+    pub name: String,
+    pub description: String,
 }
 
 impl GBMod {
     pub fn files(&self) -> &Vec<GBFile> {
-        &self._aFiles
+        &self.files
     }
     pub fn download_file(&self, idx: usize) -> Result<path::PathBuf> {
-        self._aFiles[idx].fetch()
+        self.files[idx].fetch()
     }
 
     pub fn build(id: usize) -> Result<GBMod> {
@@ -88,7 +88,32 @@ impl GBMod {
             id
         );
         let resp = blocking::get(uri)?.text()?;
-        Ok(serde_json::from_str::<GBMod>(&resp)?)
+        Ok(serde_json::from_str::<GBMod>(
+            &resp
+                .replace("_aCategory", "category")
+                .replace("_aFiles", "files")
+                .replace("_aFile", "file")
+                .replace("_sFiles", "files")
+                .replace("_sFile", "file")
+                .replace("_sName", "name")
+                .replace("_sDescription", "description")
+                .replace("_bContainsExe", "contains_exe")
+                .replace("_nDownloadCount", "download_count")
+                .replace("_nFilesize", "filesize")
+                .replace("_sAnalysisResultCode", "analysis_result_code")
+                .replace("_tsDateAdded", "date_added")
+                .replace("_sMd5Checksum", "md5")
+                .replace("_sDownloadUrl", "download_url")
+                .replace("_sIconUrl", "icon_url"),
+        )?)
+        //pub _bContainsExe: bool,
+        //pub _nDownloadCount: usize,
+        //pub _nFilesize: usize,
+        //pub _sAnalysisResultCode: String,
+        //pub _tsDateAdded: usize,
+        //pub _sMd5Checksum: String,
+        //pub file: String,
+        //pub _sDownloadUrl: String,
     }
 }
 
@@ -110,10 +135,10 @@ impl Mod {
     pub fn build(id: usize, gbmod: GBMod, idx: usize) -> Result<Mod> {
         let m = Mod {
             id,
-            character: gbmod._aCategory._sName.clone(),
+            character: gbmod.category.name.clone(),
             path: gbmod.download_file(idx)?,
-            name: gbmod._sName,
-            description: gbmod._sDescription,
+            name: gbmod.name,
+            description: gbmod.description,
             staged: false,
         };
         register_mod(&m)?;

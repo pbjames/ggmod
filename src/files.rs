@@ -1,12 +1,6 @@
 use directories::BaseDirs;
-use log::{debug, info, trace, warn};
-use serde::Serialize;
-use std::{
-    env::home_dir,
-    fs,
-    io::{self, Cursor, Read, Write},
-    path,
-};
+use log::info;
+use std::{fs, io, path};
 
 use crate::gamebanana::Mod;
 
