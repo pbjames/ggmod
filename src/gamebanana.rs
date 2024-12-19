@@ -32,6 +32,14 @@ pub struct GBFile {
     pub description: String,
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+pub struct GBMod {
+    pub category: GBCategory,
+    pub files: Vec<GBFile>,
+    pub name: String,
+    pub description: String,
+}
+
 impl GBFile {
     pub fn download_to<'a>(&self, path: &'a path::PathBuf) -> Result<&'a path::PathBuf> {
         let response = blocking::get(&self.download_url)?;
@@ -57,14 +65,6 @@ impl GBFile {
             Ok(dir)
         }
     }
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct GBMod {
-    pub category: GBCategory,
-    pub files: Vec<GBFile>,
-    pub name: String,
-    pub description: String,
 }
 
 impl GBMod {
