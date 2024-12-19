@@ -7,7 +7,7 @@ use std::{
 use reqwest::blocking;
 use serde::{Deserialize, Serialize};
 
-use crate::{download_path, register_object, registry_has_id};
+use crate::{check_gg_path, download_path, register_object, registry_has_id};
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error + Send + Sync>>;
 
@@ -16,21 +16,21 @@ type Result<T> = std::result::Result<T, Box<dyn std::error::Error + Send + Sync>
 // https://api.gamebanana.com/Core/Item/Data?itemtype=Mod&itemid={mod_id}&fields=Category().name,creator,date,description,downloads,Files().aFiles(),likes,name,Nsfw().bIsNsfw()&return_keys=true&format=json
 #[derive(Serialize, Deserialize, Debug)]
 pub struct GBCategory {
-    _sIconUrl: String,
-    _sName: String,
+    pub _sIconUrl: String,
+    pub _sName: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct GBFile {
-    _bContainsExe: bool,
-    _nDownloadCount: usize,
-    _nFilesize: usize,
-    _sAnalysisResultCode: String,
-    _tsDateAdded: usize,
-    _sMd5Checksum: String,
-    _sFile: String,
-    _sDownloadUrl: String,
-    _sDescription: String,
+    pub _bContainsExe: bool,
+    pub _nDownloadCount: usize,
+    pub _nFilesize: usize,
+    pub _sAnalysisResultCode: String,
+    pub _tsDateAdded: usize,
+    pub _sMd5Checksum: String,
+    pub _sFile: String,
+    pub _sDownloadUrl: String,
+    pub _sDescription: String,
 }
 
 impl GBFile {
@@ -84,10 +84,11 @@ impl GBMod {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Mod {
     pub id: usize,
-    character: String,
+    pub character: String,
     path: path::PathBuf,
-    name: String,
-    description: String,
+    pub name: String,
+    pub description: String,
+    pub staged: bool,
 }
 
 impl Mod {
@@ -102,8 +103,13 @@ impl Mod {
             path: gbmod.download_file(idx)?,
             name: gbmod._sName,
             description: gbmod._sDescription,
+            staged: false,
         };
         register_object(&m)?;
         Ok(m)
+    }
+
+    pub fn stage(&self) -> Result<()> {
+        todo!()
     }
 }
