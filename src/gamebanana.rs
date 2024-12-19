@@ -5,7 +5,7 @@ use std::{
 };
 
 use compress_tools::{uncompress_archive, Ownership};
-use log::info;
+use log::{debug, info};
 use reqwest::blocking;
 use serde::{Deserialize, Serialize};
 
@@ -33,7 +33,7 @@ pub struct GBFile {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct GBMod {
+pub struct GBModPage {
     pub category: GBCategory,
     pub files: Vec<GBFile>,
     pub name: String,
@@ -42,6 +42,7 @@ pub struct GBMod {
 
 impl GBFile {
     pub fn download_to<'a>(&self, path: &'a path::PathBuf) -> Result<&'a path::PathBuf> {
+        info!("Downloading new archive..");
         let response = blocking::get(&self.download_url)?;
         let mut file = fs::File::create(path)?;
         let mut content = Cursor::new(response.bytes()?);
@@ -58,21 +59,18 @@ impl GBFile {
             self.download_to(&file)?;
             let src = fs::File::open(&file)?;
             uncompress_archive(src, &dir, Ownership::Preserve)?;
-            info!(
-                "{}",
-                format!("Archive {:?} decompressed to {:?}", file, dir)
-            );
+            debug!("{}", format!("Archive {file:?} decompressed to {dir:?}"));
             Ok(dir)
         }
     }
 }
 
-impl GBMod {
+impl GBModPage {
     pub fn download_file(&self, idx: usize) -> Result<path::PathBuf> {
         self.files[idx].fetch()
     }
 
-    pub fn build(id: usize) -> Result<GBMod> {
+    pub fn build(id: usize) -> Result<GBModPage> {
         // INFO: Just in case they ever fix the key names
         // https://api.gamebanana.com/Core/Item/Data?itemtype=Mod&itemid={mod_id}&fields=Category().name,creator,date,description,downloads,Files().aFiles(),likes,name,Nsfw().bIsNsfw()&return_keys=true&format=json
         let uri = format!(
@@ -82,7 +80,7 @@ impl GBMod {
         _tsDateUpdated,_aAlternateFileSources,_bHasUpdates,_aLatestUpdates",
         );
         let resp = blocking::get(uri)?.text()?;
-        Ok(serde_json::from_str::<GBMod>(
+        Ok(serde_json::from_str::<GBModPage>(
             &resp
                 .replace("_aCategory", "category")
                 .replace("_aFiles", "files")

@@ -1,8 +1,9 @@
 use directories::BaseDirs;
-use log::info;
+use log::trace;
 use std::{fs, io, path};
 
 pub const SUBDIR_NAME: &str = "ggmod";
+pub const REGISTRY_FN: &str = "registry.json";
 
 pub fn check_download_path() -> std::result::Result<path::PathBuf, io::Error> {
     match BaseDirs::new() {
@@ -36,11 +37,22 @@ pub fn check_gg_path() -> Option<path::PathBuf> {
             .join("Paks")
             .join("~mods");
         fs::DirBuilder::new().recursive(true).create(&path).ok()?;
-        info!("Found path {:?} for steam root", path);
+        trace!("Found path {:?} for steam root", path);
         Some(path)
     } else {
         None
     }
+}
+
+pub fn check_registry() -> Result<path::PathBuf, io::Error> {
+    let reg_path = check_download_path()?.join(REGISTRY_FN);
+    if !reg_path.is_file() {
+        trace!("Write new registry.json");
+        fs::File::create(&reg_path)?;
+        let file = fs::OpenOptions::new().append(true).open(&reg_path)?;
+        serde_json::to_writer(file, &Vec::<usize>::new())?;
+    }
+    Ok(reg_path)
 }
 
 #[cfg(test)]
@@ -57,5 +69,14 @@ mod test {
             Ok(())
         }
         lift().unwrap();
+    }
+
+    #[test]
+    fn check_registry_creates() {
+        let path = check_registry().unwrap();
+        fs::remove_file(&path).unwrap();
+        assert!(!path.exists() && !path.is_file());
+        check_registry().unwrap();
+        assert!(path.exists() && path.is_file());
     }
 }

@@ -1,11 +1,11 @@
 use clap::{Parser, Subcommand};
-use ggmod::gamebanana::GBMod;
-use ggmod::modz::{check_registry, load_mods, registry_has_id, Mod};
+use ggmod::gamebanana::GBModPage;
+use ggmod::modz::LocalCollection;
 use std::io::{self, BufRead};
 use std::path::PathBuf;
 
 #[derive(Parser)]
-#[command(version, about, long_about = None)]
+#[command(version, about, long_about = None, arg_required_else_help = true)]
 struct Cli {
     /// Optional name to operate on
     name: Option<String>,
@@ -32,10 +32,10 @@ enum Commands {
         /// Mod ID
         mod_id: usize,
     },
-    /// dragon install
+    ///
     Install { mod_id: usize },
 
-    /// Uninstall mod - can be installed again later
+    /// Can be re-installed again
     Uninstall { mod_id: usize },
 
     /// List mods and respective IDs
@@ -44,45 +44,69 @@ enum Commands {
 
 fn main() {
     let cli = Cli::parse();
-    let reg_path = check_registry().unwrap_or_else(|e| {
-        panic!("{}", e);
-    });
-    colog::init();
+    let collection = LocalCollection::new();
+    match cli.verbose {
+        0 => colog::init(),
+        1 => colog::default_builder()
+            .filter_level(log::LevelFilter::Debug)
+            .init(),
+        _ => colog::default_builder()
+            .filter_level(log::LevelFilter::Trace)
+            .init(),
+    }
     match &cli.command {
-        Some(Commands::Download { mod_id, install }) => {
-            let gbmod = GBMod::build(*mod_id).expect("Couldn't get mod");
-            let opts = &gbmod.files;
-            for (i, f) in opts.iter().enumerate() {
-                println!("{} {:?}", (i + 1), f.file);
-            }
-            println!("Choose index:");
-            let stdin = io::stdin();
-            let mut iterator = stdin.lock().lines();
-            let input = iterator.next().unwrap().unwrap();
-            let input = input.trim().parse::<usize>().unwrap() - 1;
-            let mut chosen_mod = Mod::build(*mod_id, gbmod, input).expect("Couldn't download file");
-            if *install {
-                chosen_mod.stage().expect("Mod couldn't be staged");
-            }
-        }
-        Some(Commands::Install { mod_id }) => {
-            let mut chosen_mod = registry_has_id(*mod_id)
-                .expect("Invalid ID or registry (delete it)")
-                .expect("Couldn't find mod with that ID");
-            chosen_mod.stage().expect("Couldn't add mod to GGST");
-        }
-        Some(Commands::Uninstall { mod_id }) => {
-            let mut chosen_mod = registry_has_id(*mod_id)
-                .expect("Invalid ID or registry (delete it)")
-                .expect("Couldn't find mod with that ID");
-            chosen_mod.unstage().expect("Couldn't remove mod");
-        }
-        Some(Commands::List {}) => {
-            let mods: Vec<Mod> = load_mods(&reg_path).expect("Mods couldn't be loaded");
-            for m in mods {
-                println!("{}: {}", m.id, m.name)
-            }
-        }
+        Some(Commands::Download { mod_id, install }) => download(collection, *mod_id, *install),
+        Some(Commands::Install { mod_id }) => install(collection, *mod_id),
+        Some(Commands::Uninstall { mod_id }) => uninstall(collection, *mod_id),
+        Some(Commands::List {}) => list_all(collection),
         None => {}
     }
+}
+
+fn list_all(col: LocalCollection) {
+    for mod_ in col.mods() {
+        println!(
+            "[{}] [{}] {}: {}",
+            if mod_._staged() { "+" } else { " " },
+            mod_.character,
+            mod_.id,
+            mod_.name
+        )
+    }
+}
+
+fn download(mut col: LocalCollection, mod_id: usize, do_install: bool) {
+    let gbmod = GBModPage::build(mod_id).expect("Couldn't get online mod page");
+    let opts = &gbmod.files;
+    for (i, f) in opts.iter().enumerate() {
+        println!("[{}] {:?}", (i + 1), f.file);
+    }
+    println!("Choose index:");
+    let input = choose_num() - 1;
+    col.register_online_mod(gbmod, mod_id, input)
+        .expect("Couldn't download mod");
+    if do_install {
+        install(col, mod_id)
+    }
+}
+
+fn install(col: LocalCollection, mod_id: usize) {
+    col.apply_on_mod(
+        mod_id,
+        Box::new(|mod_| mod_.stage().expect("Couldn't add mod to GGST")),
+    );
+}
+
+fn uninstall(col: LocalCollection, mod_id: usize) {
+    col.apply_on_mod(
+        mod_id,
+        Box::new(|mod_| mod_.unstage().expect("Couldn't remove mod from GGST")),
+    );
+}
+
+fn choose_num() -> usize {
+    let stdin = io::stdin();
+    let mut iterator = stdin.lock().lines();
+    let input = iterator.next().unwrap().unwrap();
+    input.trim().parse::<usize>().unwrap()
 }

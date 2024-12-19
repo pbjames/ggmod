@@ -1,13 +1,65 @@
-use std::{fs, path};
-
-use crate::{check_download_path, check_gg_path, gamebanana::GBMod};
+use crate::gamebanana::GBModPage;
+use crate::{check_gg_path, check_registry};
 
 use log::info;
 use serde::{Deserialize, Serialize};
+use std::{fs, path};
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
-pub const REGISTRY_FN: &str = "registry.json";
+pub struct LocalCollection {
+    registry_path: path::PathBuf,
+    mods: Vec<Mod>,
+}
+
+impl Default for LocalCollection {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl LocalCollection {
+    pub fn new() -> LocalCollection {
+        let path = check_registry().unwrap_or_default();
+        LocalCollection {
+            registry_path: path.clone(),
+            mods: Self::load_mods(&path).unwrap_or_default(),
+        }
+    }
+
+    pub fn mods(&self) -> &Vec<Mod> {
+        &self.mods
+    }
+
+    fn load_mods(path: &path::PathBuf) -> Option<Vec<Mod>> {
+        let file = fs::OpenOptions::new().read(true).open(path).unwrap();
+        Some(serde_json::from_reader(file).unwrap())
+    }
+
+    pub fn registry_has_id(&self, mod_id: usize) -> Result<Option<Mod>> {
+        // TODO: Tiny problem, we need to stop fking cloning
+        Ok(self.mods.iter().find(|m| m.id == mod_id).cloned())
+    }
+
+    pub fn register_online_mod(&mut self, gbmod: GBModPage, id: usize, idx: usize) -> Result<()> {
+        // TODO: Could defer I/O to end of lifecycle
+        let new_mod = Mod::build(gbmod, id, idx)?;
+        let file = fs::OpenOptions::new()
+            .write(true)
+            .open(&self.registry_path)?;
+        self.mods.push(new_mod);
+        serde_json::to_writer(file, &self.mods)?;
+        Ok(())
+    }
+
+    pub fn apply_on_mod(&self, id: usize, mut closure: Box<dyn FnMut(&mut Mod)>) {
+        let mut chosen_mod = self
+            .registry_has_id(id)
+            .expect("Invalid ID or registry (delete it)")
+            .expect("Couldn't find mod with that ID");
+        closure(&mut chosen_mod);
+    }
+}
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Mod {
@@ -20,11 +72,7 @@ pub struct Mod {
 }
 
 impl Mod {
-    pub fn get(id: usize) -> Option<Mod> {
-        registry_has_id(id).ok()?
-    }
-
-    pub fn build(id: usize, gbmod: GBMod, idx: usize) -> Result<Mod> {
+    fn build(gbmod: GBModPage, id: usize, idx: usize) -> Result<Mod> {
         let m = Mod {
             id,
             character: gbmod.category.name.clone(),
@@ -33,11 +81,11 @@ impl Mod {
             description: gbmod.description,
             staged: false,
         };
-        register_mod(&m)?;
         Ok(m)
     }
 
     pub fn stage(&mut self) -> Result<()> {
+        info!("Staging {}", self.name);
         dircpy::copy_dir(
             &self.path,
             check_gg_path()
@@ -48,7 +96,16 @@ impl Mod {
         Ok(())
     }
 
+    // TODO: remove curse
+    pub fn _staged(&self) -> bool {
+        check_gg_path()
+            .unwrap_or_default()
+            .join(self.id.to_string())
+            .is_dir()
+    }
+
     pub fn unstage(&mut self) -> Result<()> {
+        info!("Unstaging {}", self.name);
         fs::remove_dir_all(
             check_gg_path()
                 .unwrap_or_default()
@@ -56,49 +113,5 @@ impl Mod {
         )?;
         self.staged = false;
         Ok(())
-    }
-}
-
-pub fn load_mods(path: &path::PathBuf) -> Option<Vec<Mod>> {
-    let file = fs::OpenOptions::new().read(true).open(path).unwrap();
-    Some(serde_json::from_reader(file).unwrap())
-}
-
-pub fn registry_has_id(mod_id: usize) -> Result<Option<Mod>> {
-    let path = check_registry()?;
-    let obj: Vec<Mod> = load_mods(&path).unwrap_or_default();
-    Ok(obj.iter().find(|m| m.id == mod_id).cloned())
-}
-
-pub fn register_mod(obj: &Mod) -> Result<()> {
-    let path = check_registry()?;
-    let mut prev = load_mods(&path).unwrap_or_default();
-    prev.append(&mut vec![obj.clone()]); // TODO: This wasteful
-    let file = fs::OpenOptions::new().write(true).open(path)?;
-    Ok(serde_json::to_writer(file, &prev)?)
-}
-
-pub fn check_registry() -> Result<path::PathBuf> {
-    let reg_path = check_download_path()?.join(REGISTRY_FN);
-    if !reg_path.is_file() {
-        info!("Write new registry.json");
-        fs::File::create(&reg_path)?;
-        let file = fs::OpenOptions::new().append(true).open(&reg_path)?;
-        serde_json::to_writer(file, &Vec::<Mod>::new())?;
-    }
-    Ok(reg_path)
-}
-
-#[cfg(test)]
-mod test {
-    use super::*;
-
-    #[test]
-    fn check_registry_creates() {
-        let path = check_registry().unwrap();
-        fs::remove_file(&path).unwrap();
-        assert!(!path.exists() && !path.is_file());
-        check_registry().unwrap();
-        assert!(path.exists() && path.is_file());
     }
 }
