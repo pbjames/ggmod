@@ -32,7 +32,7 @@ enum Commands {
         /// Mod ID
         mod_id: usize,
     },
-    ///
+    /// Puts mod inside GGST mod folder
     Install { mod_id: usize },
 
     /// Can be re-installed again
@@ -46,8 +46,8 @@ fn main() {
     let cli = Cli::parse();
     let collection = LocalCollection::new();
     match cli.verbose {
-        0 => colog::init(),
-        1 => colog::default_builder()
+        1 => colog::init(),
+        2 => colog::default_builder()
             .filter_level(log::LevelFilter::Debug)
             .init(),
         _ => colog::default_builder()

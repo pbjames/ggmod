@@ -16,7 +16,7 @@ pub fn check_download_path() -> std::result::Result<path::PathBuf, io::Error> {
     }
 }
 
-pub fn check_gg_path() -> Option<path::PathBuf> {
+pub fn check_steamroot() -> Option<path::PathBuf> {
     // TODO: This will probably need new entries
     let steamroot = [
         directories::UserDirs::new()?
@@ -24,10 +24,19 @@ pub fn check_gg_path() -> Option<path::PathBuf> {
             .join(".steam")
             .join("root"),
         path::PathBuf::from("C:\\Program Files (x86)\\Steam\\"),
+        path::PathBuf::from("C:\\Program Files\\Steam\\"),
     ]
     .into_iter()
     .reduce(|acc, path| if path.exists() { path } else { acc })?;
-    if steamroot.exists() {
+    if steamroot.try_exists().ok()? {
+        Some(steamroot)
+    } else {
+        None
+    }
+}
+
+pub fn check_gg_path() -> Option<path::PathBuf> {
+    if let Some(steamroot) = check_steamroot() {
         let path = steamroot
             .join("steamapps")
             .join("common")
