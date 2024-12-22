@@ -1,25 +1,35 @@
-use directories::BaseDirs;
+use directories::{ProjectDirs, UserDirs};
 use log::trace;
 use std::{fs, io, path};
 
 pub const SUBDIR_NAME: &str = "ggmod";
 pub const REGISTRY_FN: &str = "registry.json";
 
-pub fn check_download_path() -> std::result::Result<path::PathBuf, io::Error> {
-    match BaseDirs::new() {
-        Some(base) => {
-            let path = base.cache_dir().join(SUBDIR_NAME).join("downloads");
-            fs::DirBuilder::new().recursive(true).create(&path)?;
-            Ok(path)
-        }
-        None => Err(io::Error::new(io::ErrorKind::NotFound, "Path inaccessible")),
+type Result<T> = std::result::Result<T, io::Error>;
+
+pub fn not_found(s: &str) -> io::Error {
+    io::Error::new(io::ErrorKind::NotFound, s)
+}
+
+pub fn ggmod_root() -> Result<ProjectDirs> {
+    match ProjectDirs::from("mod", "sigma", "ggmod") {
+        Some(path) => Ok(path),
+        None => Err(not_found("GGMod path inaccessible")),
     }
 }
 
-pub fn check_steamroot() -> Option<path::PathBuf> {
-    // TODO: This will probably need new entries
+pub fn download_path() -> Result<path::PathBuf> {
+    let proj_root = ggmod_root()?;
+    let dl_path = proj_root.data_dir().join("downloads");
+    fs::DirBuilder::new().recursive(true).create(&dl_path)?;
+    Ok(dl_path)
+}
+
+pub fn steam_root() -> Result<path::PathBuf> {
+    // TODO: This will probably need new entries + replace exists call
     let steamroot = [
-        directories::UserDirs::new()?
+        UserDirs::new()
+            .ok_or(not_found("User dir path inaccessible"))?
             .home_dir()
             .join(".steam")
             .join("root"),
@@ -27,34 +37,27 @@ pub fn check_steamroot() -> Option<path::PathBuf> {
         path::PathBuf::from("C:\\Program Files\\Steam\\"),
     ]
     .into_iter()
-    .reduce(|acc, path| if path.exists() { path } else { acc })?;
-    if steamroot.try_exists().ok()? {
-        Some(steamroot)
-    } else {
-        None
-    }
+    .reduce(|acc, path| if path.exists() { path } else { acc })
+    .filter(|p| p.exists());
+    steamroot.ok_or(not_found("steam root inaccessible"))
 }
 
-pub fn check_gg_path() -> Option<path::PathBuf> {
-    if let Some(steamroot) = check_steamroot() {
-        let path = steamroot
-            .join("steamapps")
-            .join("common")
-            .join("GUILTY GEAR STRIVE")
-            .join("RED")
-            .join("Content")
-            .join("Paks")
-            .join("~mods");
-        fs::DirBuilder::new().recursive(true).create(&path).ok()?;
-        trace!("Found path {:?} for steam root", path);
-        Some(path)
-    } else {
-        None
-    }
+pub fn ggst_path() -> Result<path::PathBuf> {
+    let path = steam_root()?
+        .join("steamapps")
+        .join("common")
+        .join("GUILTY GEAR STRIVE")
+        .join("RED")
+        .join("Content")
+        .join("Paks")
+        .join("~mods");
+    fs::DirBuilder::new().recursive(true).create(&path)?;
+    trace!("Found path {:?} for steam root", path);
+    Ok(path)
 }
 
-pub fn check_registry() -> Result<path::PathBuf, io::Error> {
-    let reg_path = check_download_path()?.join(REGISTRY_FN);
+pub fn registry() -> Result<path::PathBuf> {
+    let reg_path = download_path()?.join(REGISTRY_FN);
     if !reg_path.is_file() {
         trace!("Write new registry.json");
         fs::File::create(&reg_path)?;
@@ -67,25 +70,54 @@ pub fn check_registry() -> Result<path::PathBuf, io::Error> {
 #[cfg(test)]
 mod test {
     use super::*;
+    use std::env;
 
     #[test]
-    fn check_download_path_creates() {
-        fn lift() -> Result<(), Box<dyn std::error::Error>> {
-            let path = check_download_path()?;
-            fs::remove_dir(&path)?;
-            check_download_path()?;
-            fs::read_dir(&path)?;
-            Ok(())
-        }
-        lift().unwrap();
+    fn download_path_creates() {
+        let path = download_path().unwrap();
+        fs::remove_dir_all(&path).unwrap();
+        download_path().unwrap();
+        fs::read_dir(&path).unwrap();
     }
 
     #[test]
-    fn check_registry_creates() {
-        let path = check_registry().unwrap();
+    fn registry_creates() {
+        let path = registry().unwrap();
         fs::remove_file(&path).unwrap();
         assert!(!path.exists() && !path.is_file());
-        check_registry().unwrap();
+        registry().unwrap();
         assert!(path.exists() && path.is_file());
+    }
+
+    #[test]
+    fn ggmod_root_works() {
+        ggmod_root().unwrap();
+    }
+
+    #[test]
+    fn steam_root_finds() {
+        // TODO: Currently macos users aren't real and can't cross test between os
+        match env::consts::OS {
+            "windows" => {
+                let path = path::PathBuf::from("C:\\Program Files (x86)\\Steam\\");
+                fs::DirBuilder::new().recursive(true).create(path).unwrap();
+                steam_root().unwrap();
+            }
+            "linux" => {
+                let path = UserDirs::new()
+                    .unwrap()
+                    .home_dir()
+                    .join(".steam")
+                    .join("root");
+                fs::DirBuilder::new().recursive(true).create(path).unwrap();
+                steam_root().unwrap();
+            }
+            "macos" => {
+                todo!()
+            }
+            _ => {
+                todo!()
+            }
+        }
     }
 }

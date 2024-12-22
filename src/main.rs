@@ -83,7 +83,7 @@ fn download(mut col: LocalCollection, mod_id: usize, do_install: bool) {
     }
     println!("Choose index:");
     let input = choose_num() - 1;
-    col.register_online_mod(gbmod, mod_id, input)
+    col.register_online_mod(gbmod, input)
         .expect("Couldn't download mod");
     if do_install {
         install(col, mod_id)

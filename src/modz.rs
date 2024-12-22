@@ -1,5 +1,5 @@
 use crate::gamebanana::GBModPage;
-use crate::{check_gg_path, check_registry};
+use crate::{ggst_path, registry};
 
 use log::info;
 use serde::{Deserialize, Serialize};
@@ -20,7 +20,7 @@ impl Default for LocalCollection {
 
 impl LocalCollection {
     pub fn new() -> LocalCollection {
-        let path = check_registry().unwrap_or_default();
+        let path = registry().unwrap_or_default();
         LocalCollection {
             registry_path: path.clone(),
             mods: Self::load_mods(&path).unwrap_or_default(),
@@ -41,9 +41,10 @@ impl LocalCollection {
         Ok(self.mods.iter().find(|m| m.id == mod_id).cloned())
     }
 
-    pub fn register_online_mod(&mut self, gbmod: GBModPage, id: usize, idx: usize) -> Result<()> {
+    pub fn register_online_mod(&mut self, gbmod: GBModPage, idx: usize) -> Result<()> {
         // TODO: Could defer I/O to end of lifecycle
-        let new_mod = Mod::build(gbmod, id, idx)?;
+        let mod_id = gbmod.id;
+        let new_mod = Mod::build(gbmod, mod_id, idx)?;
         let file = fs::OpenOptions::new()
             .write(true)
             .open(&self.registry_path)?;
@@ -88,9 +89,7 @@ impl Mod {
         info!("Staging {}", self.name);
         dircpy::copy_dir(
             &self.path,
-            check_gg_path()
-                .unwrap_or_default()
-                .join(self.id.to_string()),
+            ggst_path().unwrap_or_default().join(self.id.to_string()),
         )?;
         self.staged = true;
         Ok(())
@@ -98,7 +97,7 @@ impl Mod {
 
     // TODO: remove curse
     pub fn _staged(&self) -> bool {
-        check_gg_path()
+        ggst_path()
             .unwrap_or_default()
             .join(self.id.to_string())
             .is_dir()
@@ -106,11 +105,7 @@ impl Mod {
 
     pub fn unstage(&mut self) -> Result<()> {
         info!("Unstaging {}", self.name);
-        fs::remove_dir_all(
-            check_gg_path()
-                .unwrap_or_default()
-                .join(self.id.to_string()),
-        )?;
+        fs::remove_dir_all(ggst_path().unwrap_or_default().join(self.id.to_string()))?;
         self.staged = false;
         Ok(())
     }

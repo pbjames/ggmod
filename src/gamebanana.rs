@@ -9,7 +9,7 @@ use log::{debug, info};
 use reqwest::blocking;
 use serde::{Deserialize, Serialize};
 
-use crate::check_download_path;
+use crate::download_path;
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
@@ -38,6 +38,7 @@ pub struct GBModPage {
     pub files: Vec<GBFile>,
     pub name: String,
     pub description: String,
+    pub id: usize,
 }
 
 impl GBFile {
@@ -51,7 +52,7 @@ impl GBFile {
     }
 
     pub fn fetch(&self) -> Result<path::PathBuf> {
-        let file = check_download_path().unwrap_or_default().join(&self.file);
+        let file = download_path().unwrap_or_default().join(&self.file);
         let dir = file.with_extension("");
         if dir.exists() && dir.is_dir() {
             Ok(dir)
@@ -77,7 +78,8 @@ impl GBModPage {
             "https://gamebanana.com/apiv6/Mod/{id}?\
         _csvProperties=_sName,_aGame,_sProfileUrl,_aPreviewMedia,\
         _sDescription,_aSubmitter,_aCategory,_aSuperCategory,_aFiles,\
-        _tsDateUpdated,_aAlternateFileSources,_bHasUpdates,_aLatestUpdates",
+        _tsDateUpdated,_aAlternateFileSources,_bHasUpdates,_aLatestUpdates,\
+        _idRow",
         );
         let resp = blocking::get(uri)?.text()?;
         Ok(serde_json::from_str::<GBModPage>(
@@ -96,7 +98,8 @@ impl GBModPage {
                 .replace("_tsDateAdded", "date_added")
                 .replace("_sMd5Checksum", "md5")
                 .replace("_sDownloadUrl", "download_url")
-                .replace("_sIconUrl", "icon_url"),
+                .replace("_sIconUrl", "icon_url")
+                .replace("_idRow", "id"),
         )?)
     }
 }
