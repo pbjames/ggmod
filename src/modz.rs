@@ -18,6 +18,7 @@ impl Default for LocalCollection {
     }
 }
 
+// TODO: Hold mutable mods in a single list, save mutable mod list to file at drop
 impl LocalCollection {
     pub fn new() -> LocalCollection {
         let path = registry().unwrap_or_default();
@@ -42,14 +43,9 @@ impl LocalCollection {
     }
 
     pub fn register_online_mod(&mut self, gbmod: GBModPage, idx: usize) -> Result<()> {
-        // TODO: Could defer I/O to end of lifecycle
         let mod_id = gbmod.id;
         let new_mod = Mod::build(gbmod, mod_id, idx)?;
-        let file = fs::OpenOptions::new()
-            .write(true)
-            .open(&self.registry_path)?;
         self.mods.push(new_mod);
-        serde_json::to_writer(file, &self.mods)?;
         Ok(())
     }
 
@@ -59,6 +55,20 @@ impl LocalCollection {
             .expect("Invalid ID or registry (delete it)")
             .expect("Couldn't find mod with that ID");
         closure(&mut chosen_mod);
+    }
+
+    fn write_mods(&self) -> Option<()> {
+        let file = fs::OpenOptions::new()
+            .write(true)
+            .open(&self.registry_path)
+            .ok()?;
+        serde_json::to_writer(file, &self.mods).ok()
+    }
+}
+
+impl Drop for LocalCollection {
+    fn drop(&mut self) {
+        self.write_mods();
     }
 }
 
