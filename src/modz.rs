@@ -18,7 +18,6 @@ impl Default for LocalCollection {
     }
 }
 
-// TODO: Hold mutable mods in a single list, save mutable mod list to file at drop
 impl LocalCollection {
     pub fn new() -> LocalCollection {
         let path = registry().unwrap_or_default();
@@ -37,9 +36,8 @@ impl LocalCollection {
         Some(serde_json::from_reader(file).unwrap())
     }
 
-    pub fn registry_has_id(&self, mod_id: usize) -> Result<Option<Mod>> {
-        // TODO: Tiny problem, we need to stop fking cloning
-        Ok(self.mods.iter().find(|m| m.id == mod_id).cloned())
+    pub fn registry_has_id(&self, mod_id: usize) -> bool {
+        self.mods.iter().any(|m| m.id == mod_id)
     }
 
     pub fn register_online_mod(&mut self, gbmod: GBModPage, idx: usize) -> Result<()> {
@@ -49,12 +47,13 @@ impl LocalCollection {
         Ok(())
     }
 
-    pub fn apply_on_mod(&self, id: usize, mut closure: Box<dyn FnMut(&mut Mod)>) {
-        let mut chosen_mod = self
-            .registry_has_id(id)
-            .expect("Invalid ID or registry (delete it)")
-            .expect("Couldn't find mod with that ID");
-        closure(&mut chosen_mod);
+    pub fn apply_on_mod(&mut self, id: usize, mut closure: Box<dyn FnMut(&mut Mod)>) -> Result<()> {
+        for m in &mut self.mods {
+            if m.id == id {
+                closure(m);
+            }
+        }
+        Ok(())
     }
 
     fn write_mods(&self) -> Option<()> {
@@ -103,14 +102,6 @@ impl Mod {
         )?;
         self.staged = true;
         Ok(())
-    }
-
-    // TODO: remove curse
-    pub fn _staged(&self) -> bool {
-        ggst_path()
-            .unwrap_or_default()
-            .join(self.id.to_string())
-            .is_dir()
     }
 
     pub fn unstage(&mut self) -> Result<()> {

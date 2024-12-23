@@ -46,6 +46,7 @@ fn main() {
     let cli = Cli::parse();
     let collection = LocalCollection::new();
     match cli.verbose {
+        0 => (),
         1 => colog::init(),
         2 => colog::default_builder()
             .filter_level(log::LevelFilter::Debug)
@@ -67,7 +68,7 @@ fn list_all(col: LocalCollection) {
     for mod_ in col.mods() {
         println!(
             "[{}] [{}] {}: {}",
-            if mod_._staged() { "+" } else { " " },
+            if mod_.staged { "+" } else { " " },
             mod_.character,
             mod_.id,
             mod_.name
@@ -90,18 +91,20 @@ fn download(mut col: LocalCollection, mod_id: usize, do_install: bool) {
     }
 }
 
-fn install(col: LocalCollection, mod_id: usize) {
+fn install(mut col: LocalCollection, mod_id: usize) {
     col.apply_on_mod(
         mod_id,
         Box::new(|mod_| mod_.stage().expect("Couldn't add mod to GGST")),
-    );
+    )
+    .expect("add ");
 }
 
-fn uninstall(col: LocalCollection, mod_id: usize) {
+fn uninstall(mut col: LocalCollection, mod_id: usize) {
     col.apply_on_mod(
         mod_id,
         Box::new(|mod_| mod_.unstage().expect("Couldn't remove mod from GGST")),
-    );
+    )
+    .expect("couldnt rempve stuf");
 }
 
 fn choose_num() -> usize {
