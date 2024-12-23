@@ -1,7 +1,7 @@
 use crate::gamebanana::GBModPage;
 use crate::{ggst_path, registry};
 
-use log::info;
+use log::{info, trace};
 use serde::{Deserialize, Serialize};
 use std::{fs, path};
 
@@ -33,6 +33,7 @@ impl LocalCollection {
 
     fn load_mods(path: &path::PathBuf) -> Option<Vec<Mod>> {
         let file = fs::OpenOptions::new().read(true).open(path).unwrap();
+        trace!("Reading {:?} into LocalCollection", path);
         Some(serde_json::from_reader(file).unwrap())
     }
 
@@ -61,6 +62,8 @@ impl LocalCollection {
             .write(true)
             .open(&self.registry_path)
             .ok()?;
+        file.set_len(0).ok()?;
+        trace!("Drop LocalCollection, write to {:?}", &self.registry_path);
         serde_json::to_writer(file, &self.mods).ok()
     }
 }
