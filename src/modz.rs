@@ -18,6 +18,7 @@ impl Default for LocalCollection {
     }
 }
 
+/// Use this for managing mods locally stored
 impl LocalCollection {
     pub fn new() -> LocalCollection {
         let path = registry().unwrap_or_default();
@@ -42,8 +43,7 @@ impl LocalCollection {
     }
 
     pub fn register_online_mod(&mut self, gbmod: GBModPage, idx: usize) -> Result<()> {
-        let mod_id = gbmod.id;
-        let new_mod = Mod::build(gbmod, mod_id, idx)?;
+        let new_mod = Mod::build(gbmod, idx)?;
         self.mods.push(new_mod);
         Ok(())
     }
@@ -85,9 +85,9 @@ pub struct Mod {
 }
 
 impl Mod {
-    fn build(gbmod: GBModPage, id: usize, idx: usize) -> Result<Mod> {
+    fn build(gbmod: GBModPage, idx: usize) -> Result<Mod> {
         let m = Mod {
-            id,
+            id: gbmod.id,
             character: gbmod.category.name.clone(),
             path: gbmod.download_file(idx)?,
             name: gbmod.name,

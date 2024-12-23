@@ -32,6 +32,7 @@ pub struct GBFile {
     pub description: String,
 }
 
+/// Use this to download mods, inspect them and add them to a local collection
 #[derive(Serialize, Deserialize, Debug)]
 pub struct GBModPage {
     pub category: GBCategory,
