@@ -70,11 +70,12 @@ pub fn registry() -> Result<path::PathBuf> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use std::env;
+    use std::{env, thread, time};
 
     #[test]
     fn download_path_creates() {
         let path = download_path().unwrap();
+        thread::sleep(time::Duration::from_millis(20));
         fs::remove_dir_all(&path).unwrap();
         download_path().unwrap();
         fs::read_dir(&path).unwrap();
