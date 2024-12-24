@@ -1,4 +1,4 @@
-use crate::gamebanana::GBModPage;
+use crate::gamebanana::modpage::GBModPage;
 use crate::{ggst_path, registry};
 
 use log::{info, trace};

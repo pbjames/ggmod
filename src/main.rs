@@ -1,5 +1,6 @@
 use clap::{Parser, Subcommand};
-use ggmod::gamebanana::GBModPage;
+use ggmod::gamebanana::modpage::GBModPage;
+use ggmod::gamebanana::search::GBSearchBuilder;
 use ggmod::modz::LocalCollection;
 use std::io::{self, BufRead};
 use std::path::PathBuf;
@@ -40,6 +41,9 @@ enum Commands {
 
     /// List mods and respective IDs
     List {},
+
+    /// Search online page
+    Search {},
 }
 
 fn main() {
@@ -60,8 +64,12 @@ fn main() {
         Some(Commands::Install { mod_id }) => install(collection, *mod_id),
         Some(Commands::Uninstall { mod_id }) => uninstall(collection, *mod_id),
         Some(Commands::List {}) => list_all(collection),
+        Some(Commands::Search {}) => search(),
         None => {}
     }
+}
+fn search() {
+    GBSearchBuilder::new().build().read_page(1);
 }
 
 fn list_all(col: LocalCollection) {

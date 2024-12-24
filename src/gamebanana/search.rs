@@ -1,5 +1,7 @@
+use log::info;
+
 #[derive(Debug)]
-pub struct GBUrl {
+pub struct GBSearch {
     url: String,
 }
 
@@ -21,7 +23,7 @@ pub enum FeedFilter {
     Popular,
 }
 
-pub struct GBUrlBuilder {
+pub struct GBSearchBuilder {
     mod_type: TypeFilter,
     search: SearchFilter,
     feed: FeedFilter,
@@ -29,9 +31,9 @@ pub struct GBUrlBuilder {
     nsfw: bool,
 }
 
-impl GBUrl {
-    fn base(s: &str) -> GBUrl {
-        GBUrl {
+impl GBSearch {
+    fn base(s: &str) -> GBSearch {
+        GBSearch {
             url: String::from("https://gamebanana.com/apiv6/") + s,
         }
     }
@@ -42,13 +44,13 @@ impl GBUrl {
 
     pub fn read_page(&self, n: usize) {
         let url = self.page(n);
-        todo!()
+        info!("url generated: {url}");
     }
 }
 
-impl GBUrlBuilder {
-    pub fn new() -> GBUrlBuilder {
-        GBUrlBuilder {
+impl GBSearchBuilder {
+    pub fn new() -> GBSearchBuilder {
+        GBSearchBuilder {
             mod_type: TypeFilter::Mod,
             search: SearchFilter::Game { game_id: 11534 },
             feed: FeedFilter::Popular,
@@ -81,7 +83,7 @@ impl GBUrlBuilder {
         self
     }
 
-    pub fn build(self) -> GBUrl {
+    pub fn build(self) -> GBSearch {
         let mut part = String::new();
         let per_page = self.per_page;
         match self.mod_type {
@@ -101,7 +103,7 @@ impl GBUrlBuilder {
             }
         }
         part.push_str(&format!(
-            "_csvProperties=_sName,_sModelName,_sProfileUrl,\
+            "_csvProperties=_sName,_sModelName,_idRow,\
             _aSubmitter,_tsDateUpdated,_tsDateAdded,_aPreviewMedia,_sText,\
             _sDescription,_aCategory,_aRootCategory,_aGame,_nViewCount,_nLikeCount,\
             _nDownloadCount,_aFiles,_aModManagerIntegrations,_bIsNsfw,\
@@ -117,11 +119,11 @@ impl GBUrlBuilder {
             }
             FeedFilter::Recent => part.push_str("&_sOrderBy=_tsDateUpdated,DESC"),
         }
-        GBUrl::base(&part)
+        GBSearch::base(&part)
     }
 }
 
-impl Default for GBUrlBuilder {
+impl Default for GBSearchBuilder {
     fn default() -> Self {
         Self::new()
     }
