@@ -80,11 +80,11 @@ fn search(size: usize, page: usize) {
         .expect("Couldn't get search results");
     for entry in entries {
         let mut name = entry.name.clone();
-        name.truncate(20);
+        name.truncate(35);
         let mut desc = entry.description.clone();
-        desc.truncate(20);
+        desc.truncate(50);
         let views = entry.view_count;
-        println!("{name:<20} - {desc:<20} :: {views} views");
+        println!("{name:<35} - {desc:<50} :: {views} views");
     }
 }
 
