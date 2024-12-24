@@ -6,8 +6,8 @@ pub enum TypeFilter {
     WiP,
 }
 
-pub enum SearchFilter {
-    Name { search: String, game_id: usize },
+pub enum SearchFilter<'a> {
+    Name { search: &'a str, game_id: usize },
     Game { game_id: usize },
     Category { cat_id: usize },
 }
@@ -18,30 +18,31 @@ pub enum FeedFilter {
     Popular,
 }
 
-pub struct SearchBuilder {
+pub struct SearchBuilder<'a> {
     mod_type: TypeFilter,
-    search: SearchFilter,
+    search: SearchFilter<'a>,
     feed: FeedFilter,
     per_page: usize,
     nsfw: bool,
 }
 
-impl SearchBuilder {
-    pub fn new() -> SearchBuilder {
+impl<'a> SearchBuilder<'a> {
+    pub fn new() -> SearchBuilder<'a> {
         SearchBuilder {
             mod_type: TypeFilter::Mod,
             search: SearchFilter::Game { game_id: 11534 },
-            feed: FeedFilter::Popular,
+            feed: FeedFilter::Featured,
             per_page: 30,
             nsfw: false,
         }
     }
+
     pub fn of_type(mut self, mod_type: TypeFilter) -> Self {
         self.mod_type = mod_type;
         self
     }
 
-    pub fn by_search(mut self, search: SearchFilter) -> Self {
+    pub fn by_search(mut self, search: SearchFilter<'a>) -> Self {
         self.search = search;
         self
     }
@@ -92,7 +93,7 @@ impl SearchBuilder {
         match self.feed {
             FeedFilter::Popular => part.push_str("&_sOrderBy=_nDownloadCount,DESC"),
             FeedFilter::Featured => {
-                part.push_str("&_aArgs[]=_sbWasFeatured=true&_sOrderBy=_tsDateAdded,DESC")
+                part.push_str("&_aArgs[]=_sbWasFeatured = true& _sOrderBy=_tsDateAdded,DESC")
             }
             FeedFilter::Recent => part.push_str("&_sOrderBy=_tsDateUpdated,DESC"),
         }
@@ -100,7 +101,7 @@ impl SearchBuilder {
     }
 }
 
-impl Default for SearchBuilder {
+impl<'a> Default for SearchBuilder<'a> {
     fn default() -> Self {
         Self::new()
     }

@@ -1,5 +1,5 @@
-use clap::{Parser, Subcommand};
-use ggmod::gamebanana::builder::SearchBuilder;
+use clap::{CommandFactory, Parser, Subcommand};
+use ggmod::gamebanana::builder::{FeedFilter, SearchBuilder, SearchFilter};
 use ggmod::gamebanana::modpage::GBModPage;
 use ggmod::modz::LocalCollection;
 use std::io::{self, BufRead};
@@ -44,9 +44,27 @@ enum Commands {
 
     /// Search online page
     Search {
+        /// Number of results per page
         #[arg(short, long)]
-        page_size: usize,
+        size: Option<usize>,
+
+        /// Sort by featured
+        #[arg(short, long)]
+        featured: bool,
+
+        /// Sort by popularity
+        #[arg(short, long)]
+        popular: bool,
+
+        /// Sort by time
+        #[arg(short, long)]
+        recent: bool,
+
+        /// Page no. starting from 1
         page: usize,
+
+        /// Search by name
+        name: Option<String>,
     },
 }
 
@@ -68,13 +86,51 @@ fn main() {
         Some(Commands::Install { mod_id }) => install(collection, *mod_id),
         Some(Commands::Uninstall { mod_id }) => uninstall(collection, *mod_id),
         Some(Commands::List {}) => list_all(collection),
-        Some(Commands::Search { page_size, page }) => search(*page_size, *page),
-        None => {}
+        Some(Commands::Search {
+            page,
+            size: page_size,
+            name,
+            featured,
+            popular,
+            recent,
+        }) => search(
+            *page,
+            *page_size,
+            name.clone(),
+            *featured,
+            *popular,
+            *recent,
+        ),
+        None => {
+            let mut cmd = Cli::command();
+            cmd.print_help().unwrap();
+            println!();
+            std::process::exit(1);
+        }
     }
 }
-fn search(size: usize, page: usize) {
+
+fn search(
+    page: usize,
+    page_size: Option<usize>,
+    name: Option<String>,
+    _featured: bool,
+    popular: bool,
+    recent: bool,
+) {
     let entries = SearchBuilder::new()
-        .per_page(size)
+        .per_page(page_size.unwrap_or(15))
+        .with_sort(if recent {
+            FeedFilter::Recent
+        } else if popular {
+            FeedFilter::Popular
+        } else {
+            FeedFilter::Featured
+        })
+        .by_search(SearchFilter::Name {
+            search: &name.unwrap_or(String::from("")),
+            game_id: 11534,
+        })
         .build()
         .read_page(page)
         .expect("Couldn't get search results");
