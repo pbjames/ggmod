@@ -51,9 +51,7 @@ impl Search {
         let url = self.page(n);
         info!("url generated: {url}");
         let resp = reqwest::blocking::get(url)?.text()?;
-        println!("RAW: {resp}");
         let conv = to_human(&resp)?;
-        println!("CON: {resp}");
         info!("successful search page conversion");
         Ok(serde_json::from_str::<Vec<GBSearchEntry>>(&conv)?)
     }
