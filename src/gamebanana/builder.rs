@@ -84,8 +84,7 @@ impl SearchBuilder {
             "_csvProperties=_sName,_sModelName,_idRow,\
             _aSubmitter,_tsDateUpdated,_tsDateAdded,_aPreviewMedia,_sText,\
             _sDescription,_aCategory,_aRootCategory,_aGame,_nViewCount,_nLikeCount,\
-            _nDownloadCount,_aFiles,_aModManagerIntegrations,_bIsNsfw,\
-            _aAlternateFileSources&_nPerpage={per_page}",
+            _nDownloadCount,_bIsNsfw,_aAlternateFileSources&_nPerpage={per_page}",
         ));
         if !self.nsfw {
             part.push_str("&_aArgs[]=_sbIsNsfw = false");
