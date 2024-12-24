@@ -1,6 +1,6 @@
 use clap::{Parser, Subcommand};
+use ggmod::gamebanana::builder::SearchBuilder;
 use ggmod::gamebanana::modpage::GBModPage;
-use ggmod::gamebanana::search::GBSearchBuilder;
 use ggmod::modz::LocalCollection;
 use std::io::{self, BufRead};
 use std::path::PathBuf;
@@ -69,7 +69,7 @@ fn main() {
     }
 }
 fn search() {
-    GBSearchBuilder::new().build().read_page(1);
+    SearchBuilder::new().build().read_page(0);
 }
 
 fn list_all(col: LocalCollection) {
