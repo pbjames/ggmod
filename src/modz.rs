@@ -87,7 +87,7 @@ pub struct Mod {
 impl Mod {
     fn build(gbmod: GBModPage, idx: usize) -> Result<Mod> {
         let m = Mod {
-            id: gbmod.id,
+            id: gbmod.row,
             character: gbmod.category.name.clone(),
             path: gbmod.download_file(idx)?,
             name: gbmod.name,

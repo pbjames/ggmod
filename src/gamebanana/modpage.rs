@@ -6,6 +6,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::download_path;
 
+use crate::gamebanana::to_human;
+
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -21,7 +23,7 @@ pub struct GBFile {
     pub filesize: usize,
     pub analysis_result_code: String,
     pub date_added: usize,
-    pub md5: String,
+    pub md5_checksum: String,
     pub file: String,
     pub download_url: String,
     pub description: String,
@@ -34,7 +36,7 @@ pub struct GBModPage {
     pub files: Vec<GBFile>,
     pub name: String,
     pub description: String,
-    pub id: usize,
+    pub row: usize,
 }
 
 impl GBFile {
@@ -70,7 +72,8 @@ impl GBModPage {
 
     pub fn build(id: usize) -> Result<GBModPage> {
         let resp = reqwest::blocking::get(Self::fetch_uri(id))?.text()?;
-        let conv = Self::convert_to_snake(&resp);
+        let conv = to_human(&resp)?;
+        info!("successful mod page conversion");
         Ok(serde_json::from_str::<GBModPage>(&conv)?)
     }
 
@@ -88,24 +91,5 @@ impl GBModPage {
         _tsDateUpdated,_aAlternateFileSources,_bHasUpdates,_aLatestUpdates,\
         _idRow",
         )
-    }
-
-    fn convert_to_snake(s: &str) -> String {
-        s.replace("_aCategory", "category")
-            .replace("_aFiles", "files")
-            .replace("_sFiles", "files")
-            .replace("_aFile", "file")
-            .replace("_sFile", "file")
-            .replace("_sName", "name")
-            .replace("_sDescription", "description")
-            .replace("_bContainsExe", "contains_exe")
-            .replace("_nDownloadCount", "download_count")
-            .replace("_nFilesize", "filesize")
-            .replace("_sAnalysisResultCode", "analysis_result_code")
-            .replace("_tsDateAdded", "date_added")
-            .replace("_sMd5Checksum", "md5")
-            .replace("_sDownloadUrl", "download_url")
-            .replace("_sIconUrl", "icon_url")
-            .replace("_idRow", "id")
     }
 }

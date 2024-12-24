@@ -69,7 +69,11 @@ fn main() {
     }
 }
 fn search() {
-    SearchBuilder::new().build().read_page(0);
+    let v = SearchBuilder::new()
+        .build()
+        .read_page(0)
+        .expect("Couldn't get search results");
+    println!("v: {v:?}");
 }
 
 fn list_all(col: LocalCollection) {
