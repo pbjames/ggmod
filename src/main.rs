@@ -43,7 +43,11 @@ enum Commands {
     List {},
 
     /// Search online page
-    Search {},
+    Search {
+        #[arg(short, long)]
+        page_size: usize,
+        page: usize,
+    },
 }
 
 fn main() {
@@ -64,16 +68,24 @@ fn main() {
         Some(Commands::Install { mod_id }) => install(collection, *mod_id),
         Some(Commands::Uninstall { mod_id }) => uninstall(collection, *mod_id),
         Some(Commands::List {}) => list_all(collection),
-        Some(Commands::Search {}) => search(),
+        Some(Commands::Search { page_size, page }) => search(*page_size, *page),
         None => {}
     }
 }
-fn search() {
-    let v = SearchBuilder::new()
+fn search(size: usize, page: usize) {
+    let entries = SearchBuilder::new()
+        .per_page(size)
         .build()
-        .read_page(0)
+        .read_page(page)
         .expect("Couldn't get search results");
-    println!("v: {v:?}");
+    for entry in entries {
+        let mut name = entry.name.clone();
+        name.truncate(20);
+        let mut desc = entry.description.clone();
+        desc.truncate(20);
+        let views = entry.view_count;
+        println!("{name:<20} - {desc:<20} :: {views} views");
+    }
 }
 
 fn list_all(col: LocalCollection) {
