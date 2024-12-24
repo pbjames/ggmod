@@ -1,4 +1,4 @@
-use log::info;
+use log::{info, trace};
 use serde::{Deserialize, Serialize};
 
 use crate::gamebanana::to_human;
@@ -51,7 +51,9 @@ impl Search {
         let url = self.page(n);
         info!("url generated: {url}");
         let resp = reqwest::blocking::get(url)?.text()?;
+        trace!("resp: {resp}");
         let conv = to_human(&resp)?;
+        trace!("conv: {conv}");
         info!("successful search page conversion");
         Ok(serde_json::from_str::<Vec<GBSearchEntry>>(&conv)?)
     }

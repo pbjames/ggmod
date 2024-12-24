@@ -6,7 +6,7 @@ fn to_snake_case(s: &str) -> String {
     let mut active = false;
 
     for char in s.chars() {
-        if char == '\\' {
+        if char == 'ⓟ' {
             active ^= true;
             continue;
         }
@@ -30,7 +30,7 @@ fn to_snake_case(s: &str) -> String {
 pub fn to_human(s: &str) -> Result<String, regex::Error> {
     let pattern = r"(_[a-z]+)(([A-Z][a-z]+)+)";
     let re = Regex::new(pattern).unwrap();
-    let res = re.replace_all(s, "\\$2\\");
+    let res = re.replace_all(s, "ⓟ$2ⓟ");
     let res = to_snake_case(&res);
     Ok(res.clone())
 }
@@ -41,9 +41,9 @@ mod test {
 
     #[test]
     fn snake_case_works() {
-        assert_eq!(to_snake_case("\\DateAdded\\"), "date_added");
+        assert_eq!(to_snake_case("ⓟDateAddedⓟ"), "date_added");
         assert_eq!(
-            to_snake_case("\\SuperLongname1Name2\\"),
+            to_snake_case("ⓟSuperLongname1Name2ⓟ"),
             "super_longname1_name2"
         );
     }
