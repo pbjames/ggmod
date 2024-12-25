@@ -1,8 +1,10 @@
-use crate::modz::LocalCollection;
+use crate::modz::{LocalCollection, Mod};
 
 pub struct App<'a> {
+    collection: &'a mut LocalCollection,
     pub view: View,
-    mods: &'a mut LocalCollection,
+    pub search: String,
+    pub window: Window,
 }
 
 pub enum View {
@@ -10,11 +12,19 @@ pub enum View {
     Browse,
 }
 
+pub enum Window {
+    Main,
+    Search,
+    Category,
+}
+
 impl<'a> App<'a> {
     pub fn new(collection: &mut LocalCollection) -> App {
         App {
+            collection,
             view: View::Manage,
-            mods: collection,
+            search: String::new(),
+            window: Window::Main,
         }
     }
 
@@ -23,5 +33,9 @@ impl<'a> App<'a> {
             View::Manage => self.view = View::Browse,
             View::Browse => self.view = View::Manage,
         }
+    }
+
+    pub fn search(&mut self) {
+        // filter a view of mod key and values
     }
 }

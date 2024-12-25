@@ -9,7 +9,7 @@ use ratatui::{
 use crate::modz::LocalCollection;
 
 use super::{
-    app::{App, View},
+    app::{App, View, Window},
     ui::ui,
 };
 
@@ -39,15 +39,26 @@ fn handle_event(app: &mut App) -> Result<bool> {
         if key.kind == event::KeyEventKind::Release {
             return Ok(false);
         }
-        match app.view {
-            View::Manage => match key.code {
-                KeyCode::Char('l') => app.toggle_view(),
+        match app.window {
+            Window::Main => match app.view {
+                View::Manage => match key.code {
+                    KeyCode::Char('l') => app.toggle_view(),
+                    _ => (),
+                },
+                View::Browse => match key.code {
+                    KeyCode::Char('h') => app.toggle_view(),
+                    _ => (),
+                },
+            },
+            Window::Search => match key.code {
+                KeyCode::Enter => app.search(),
+                KeyCode::Backspace => {
+                    app.search.pop();
+                }
+                KeyCode::Char(s) => app.search.push(s),
                 _ => (),
             },
-            View::Browse => match key.code {
-                KeyCode::Char('h') => app.toggle_view(),
-                _ => (),
-            },
+            Window::Category => (),
         }
         match key.code {
             KeyCode::Char('q') => return Ok(true),
