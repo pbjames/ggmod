@@ -32,7 +32,7 @@ pub fn to_human(s: &str) -> Result<String, regex::Error> {
     let re = Regex::new(pattern).unwrap();
     let res = re.replace_all(s, "ⓟ$2ⓟ");
     let res = to_snake_case(&res);
-    Ok(res.clone())
+    Ok(res)
 }
 
 #[cfg(test)]
