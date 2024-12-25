@@ -1,19 +1,12 @@
-use clap::{CommandFactory, Parser, Subcommand};
-use ggmod::gamebanana::builder::{FeedFilter, SearchBuilder, SearchFilter};
-use ggmod::gamebanana::modpage::GBModPage;
+use clap::{Parser, Subcommand};
+use ggmod::cli::*;
 use ggmod::modz::LocalCollection;
-use std::io::{self, BufRead};
-use std::path::PathBuf;
 
 #[derive(Parser)]
 #[command(version, about, long_about = None, arg_required_else_help = true)]
 struct Cli {
     /// Optional name to operate on
     name: Option<String>,
-
-    /// Sets a custom config file
-    #[arg(short, long, value_name = "FILE")]
-    config: Option<PathBuf>,
 
     /// Provide more debugging information
     #[arg(short, long, action = clap::ArgAction::Count)]
@@ -101,95 +94,6 @@ fn main() {
             *popular,
             *recent,
         ),
-        None => {
-            let mut cmd = Cli::command();
-            cmd.print_help().unwrap();
-            println!();
-            std::process::exit(1);
-        }
+        None => (),
     }
-}
-
-fn search(
-    page: usize,
-    page_size: Option<usize>,
-    name: Option<String>,
-    _featured: bool,
-    popular: bool,
-    recent: bool,
-) {
-    let entries = SearchBuilder::new()
-        .per_page(page_size.unwrap_or(15))
-        .with_sort(if recent {
-            FeedFilter::Recent
-        } else if popular {
-            FeedFilter::Popular
-        } else {
-            FeedFilter::Featured
-        })
-        .by_search(SearchFilter::Name {
-            search: &name.unwrap_or(String::from("")),
-            game_id: 11534,
-        })
-        .build()
-        .read_page(page)
-        .expect("Couldn't get search results");
-    for entry in entries {
-        let mut name = entry.name.clone();
-        name.truncate(35);
-        let mut desc = entry.description.clone();
-        desc.truncate(50);
-        let views = entry.view_count;
-        println!("{name:<35} - {desc:<50} :: {views} views");
-    }
-}
-
-fn list_all(col: LocalCollection) {
-    for mod_ in col.mods() {
-        println!(
-            "[{}] [{}] {}: {}",
-            if mod_.staged { "+" } else { " " },
-            mod_.character,
-            mod_.id,
-            mod_.name
-        )
-    }
-}
-
-fn download(mut col: LocalCollection, mod_id: usize, do_install: bool) {
-    let gbmod = GBModPage::build(mod_id).expect("Couldn't get online mod page");
-    let opts = &gbmod.files;
-    for (i, f) in opts.iter().enumerate() {
-        println!("[{}] {:?}", (i + 1), f.file);
-    }
-    println!("Choose index:");
-    let input = choose_num() - 1;
-    col.register_online_mod(gbmod, input)
-        .expect("Couldn't download mod");
-    if do_install {
-        install(col, mod_id)
-    }
-}
-
-fn install(mut col: LocalCollection, mod_id: usize) {
-    col.apply_on_mod(
-        mod_id,
-        Box::new(|mod_| mod_.stage().expect("Couldn't add mod to GGST")),
-    )
-    .expect("add ");
-}
-
-fn uninstall(mut col: LocalCollection, mod_id: usize) {
-    col.apply_on_mod(
-        mod_id,
-        Box::new(|mod_| mod_.unstage().expect("Couldn't remove mod from GGST")),
-    )
-    .expect("couldnt rempve stuf");
-}
-
-fn choose_num() -> usize {
-    let stdin = io::stdin();
-    let mut iterator = stdin.lock().lines();
-    let input = iterator.next().unwrap().unwrap();
-    input.trim().parse::<usize>().unwrap()
 }
