@@ -1,9 +1,10 @@
 use clap::{Parser, Subcommand};
 use ggmod::cli::*;
 use ggmod::modz::LocalCollection;
+use ggmod::tui::run_tui;
 
 #[derive(Parser)]
-#[command(version, about, long_about = None, arg_required_else_help = true)]
+#[command(version, about, long_about = None, arg_required_else_help = false)]
 struct Cli {
     /// Optional name to operate on
     name: Option<String>,
@@ -63,7 +64,7 @@ enum Commands {
 
 fn main() {
     let cli = Cli::parse();
-    let collection = LocalCollection::new();
+    let mut collection = LocalCollection::new();
     match cli.verbose {
         0 => (),
         1 => colog::init(),
@@ -94,6 +95,6 @@ fn main() {
             *popular,
             *recent,
         ),
-        None => (),
+        None => run_tui(&mut collection),
     }
 }

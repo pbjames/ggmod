@@ -1,7 +1,5 @@
 use crate::files::*;
 
-mod tui;
-pub use tui::run_tui;
 pub mod cli;
 pub mod files;
 pub mod gamebanana {
@@ -10,5 +8,11 @@ pub mod gamebanana {
     pub mod builder;
     pub mod modpage;
     pub mod search;
+}
+pub mod tui {
+    mod app;
+    mod runner;
+    mod ui;
+    pub use runner::run_tui;
 }
 pub mod modz;
