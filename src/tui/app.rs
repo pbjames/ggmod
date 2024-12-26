@@ -1,10 +1,10 @@
 use crate::{
     gamebanana::builder::{FeedFilter, SearchBuilder},
-    modz::LocalCollection,
+    modz::{LocalCollection, Mod},
 };
 
 pub struct App<'a> {
-    collection: &'a mut LocalCollection,
+    collection: &'a LocalCollection,
     pub sort: FeedFilter,
     pub settings: SearchBuilder<'a>,
     pub view: View,
@@ -25,7 +25,7 @@ pub enum Window {
 }
 
 impl<'a> App<'a> {
-    pub fn new(collection: &mut LocalCollection) -> App {
+    pub fn new(collection: &LocalCollection) -> App {
         App {
             collection,
             view: View::Manage,
@@ -88,9 +88,23 @@ impl<'a> App<'a> {
         }
     }
 
-    pub fn search(&mut self) {
-        // filter a view of mod key and values
+    pub fn staged(&self) -> Vec<&str> {
+        self.collection
+            .filtered(Box::new(|m: &&Mod| m.staged))
+            .iter()
+            .map(|m: &&Mod| String::as_ref(&m.name))
+            .collect()
     }
+
+    pub fn unstaged(&self) -> Vec<&str> {
+        self.collection
+            .filtered(Box::new(|m: &&Mod| !m.staged))
+            .iter()
+            .map(|m: &&Mod| String::as_ref(&m.name))
+            .collect()
+    }
+
+    pub fn search(&mut self) {}
 
     pub fn scroll_up(&mut self) {}
 

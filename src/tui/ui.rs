@@ -4,7 +4,7 @@ use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Style},
     text::{Line, Span},
-    widgets::{Block, Borders, Paragraph},
+    widgets::{Block, Borders, List, Paragraph},
     Frame,
 };
 
@@ -161,11 +161,11 @@ fn manage_view(frame: &mut Frame, app: &App, area: Rect) {
         } else {
             Color::Gray
         }));
-    let text_left = Paragraph::new("left").block(block.clone()).left_aligned();
-    let text_right = Paragraph::new("right").block(block.clone()).left_aligned();
+    let left = List::new(app.staged()).block(block.clone());
+    let right = List::new(app.unstaged()).block(block.clone());
     frame.render_widget(block, area);
-    frame.render_widget(text_left, halves[0]);
-    frame.render_widget(text_right, halves[1]);
+    frame.render_widget(left, halves[0]);
+    frame.render_widget(right, halves[1]);
 }
 
 fn browse_view(frame: &mut Frame, app: &App, area: Rect) {

@@ -1,5 +1,6 @@
 use super::search::Search;
 
+#[derive(Debug)]
 pub enum TypeFilter {
     Mod,
     Sound,
