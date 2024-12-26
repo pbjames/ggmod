@@ -23,7 +23,6 @@ pub struct GBFile {
     pub filesize: usize,
     pub analysis_result_code: String,
     pub date_added: usize,
-    pub md5_checksum: String,
     pub file: String,
     pub download_url: String,
     pub description: String,
