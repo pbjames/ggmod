@@ -9,7 +9,7 @@ use ratatui::{
 use crate::modz::LocalCollection;
 
 use super::{
-    app::{App, View, Window},
+    app::{App, Window},
     ui::ui,
 };
 

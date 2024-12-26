@@ -1,6 +1,6 @@
 use crate::{
     gamebanana::builder::{FeedFilter, SearchBuilder},
-    modz::{LocalCollection, Mod},
+    modz::LocalCollection,
 };
 
 pub struct App<'a> {

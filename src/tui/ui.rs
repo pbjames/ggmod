@@ -3,7 +3,7 @@ use std::rc::Rc;
 use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Style},
-    text::{self, Line, Span, Text},
+    text::{Line, Span},
     widgets::{Block, Borders, Paragraph},
     Frame,
 };
