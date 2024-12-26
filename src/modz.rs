@@ -3,6 +3,7 @@ use crate::{ggst_path, registry};
 
 use log::{info, trace};
 use serde::{Deserialize, Serialize};
+use std::ops::Deref;
 use std::{fs, path};
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
@@ -40,6 +41,10 @@ impl LocalCollection {
 
     pub fn registry_has_id(&self, mod_id: usize) -> bool {
         self.mods.iter().any(|m| m.id == mod_id)
+    }
+
+    pub fn filtered(&self, p: Box<dyn FnMut(&&Mod) -> bool>) -> Vec<&Mod> {
+        self.mods.iter().filter(p).collect()
     }
 
     pub fn register_online_mod(&mut self, gbmod: GBModPage, idx: usize) -> Result<()> {
