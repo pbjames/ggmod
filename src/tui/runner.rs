@@ -40,28 +40,30 @@ fn handle_event(app: &mut App) -> Result<bool> {
             return Ok(false);
         }
         match app.window {
-            Window::Main => match app.view {
-                View::Manage => match key.code {
-                    KeyCode::Char('l') => app.toggle_view(),
-                    _ => (),
-                },
-                View::Browse => match key.code {
-                    KeyCode::Char('h') => app.toggle_view(),
-                    _ => (),
-                },
+            Window::Main => match key.code {
+                KeyCode::Char('h') => app.toggle_view(),
+                KeyCode::Char('j') => app.scroll_down(),
+                KeyCode::Char('k') => app.scroll_up(),
+                KeyCode::Char('l') => app.toggle_view(),
+                _ => (),
             },
             Window::Search => match key.code {
                 KeyCode::Enter => app.search(),
                 KeyCode::Backspace => {
                     app.search.pop();
                 }
+                KeyCode::Left => app.cycle_sort_back(),
+                KeyCode::Right => app.cycle_sort(),
                 KeyCode::Char(s) => app.search.push(s),
                 _ => (),
             },
+            Window::Section => (),
             Window::Category => (),
         }
         match key.code {
             KeyCode::Char('q') => return Ok(true),
+            KeyCode::Tab => app.cycle_window(),
+            KeyCode::BackTab => app.cycle_window_back(),
             _ => (),
         }
     }
