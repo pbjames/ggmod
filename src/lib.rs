@@ -17,8 +17,8 @@ pub mod gamebanana {
 }
 pub mod tui {
     mod app;
-    mod runner;
+    mod handler;
     mod ui;
-    pub use runner::run_tui;
+    pub use handler::run_tui;
 }
 pub mod modz;
