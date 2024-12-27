@@ -1,9 +1,7 @@
-use crate::gamebanana::modpage::GBModPage;
-use crate::{ggst_path, registry};
+use crate::{gamebanana::models::modpage::GBModPage, ggst_path, registry};
 
 use log::{info, trace};
 use serde::{Deserialize, Serialize};
-use std::ops::Deref;
 use std::{fs, path};
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;

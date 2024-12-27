@@ -1,10 +1,9 @@
 use std::io::{self, BufRead};
 
+use crate::gamebanana::models::modpage::GBModPage;
+
 use super::{
-    gamebanana::{
-        builder::{FeedFilter, SearchBuilder, SearchFilter},
-        modpage::GBModPage,
-    },
+    gamebanana::builder::{FeedFilter, SearchBuilder, SearchFilter},
     modz::LocalCollection,
 };
 
