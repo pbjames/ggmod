@@ -5,14 +5,14 @@ use serde::{Deserialize, Serialize};
 
 use crate::gamebanana::to_human;
 
-use super::{category::GBCategory, file::GBFile};
+use super::{category::GBModCategory, file::GBFile};
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 /// Use this to download mods, inspect them and add them to a local collection
 #[derive(Serialize, Deserialize, Debug)]
 pub struct GBModPage {
-    pub category: GBCategory,
+    pub category: GBModCategory,
     pub files: Vec<GBFile>,
     pub name: String,
     pub description: String,
