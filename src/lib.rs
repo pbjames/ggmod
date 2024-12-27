@@ -6,7 +6,13 @@ pub mod gamebanana {
     mod util;
     use util::*;
     pub mod builder;
-    pub mod models;
+    pub mod models {
+        pub mod category;
+        pub mod file;
+        pub mod modpage;
+        pub mod preview;
+        pub mod search_result;
+    }
     pub mod search;
 }
 pub mod tui {
