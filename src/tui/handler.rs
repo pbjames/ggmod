@@ -13,7 +13,7 @@ use super::{
     ui::ui,
 };
 
-type Result<T> = std::result::Result<T, io::Error>;
+type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 pub fn run_tui(collection: &mut LocalCollection) {
     let mut terminal = ratatui::init();
@@ -42,19 +42,17 @@ fn handle_event(app: &mut App) -> Result<bool> {
         match app.window {
             Window::Main => match key.code {
                 KeyCode::Char('h') => app.toggle_view(),
-                KeyCode::Char('j') => app.scroll_down(),
-                KeyCode::Char('k') => app.scroll_up(),
                 KeyCode::Char('l') => app.toggle_view(),
                 _ => (),
             },
             Window::Search => match key.code {
-                KeyCode::Enter => app.search(),
-                KeyCode::Backspace => {
-                    app.search.pop();
-                }
                 KeyCode::Left => app.cycle_sort_back(),
                 KeyCode::Right => app.cycle_sort(),
-                KeyCode::Char(s) => app.search.push(s),
+                KeyCode::Enter => app.search()?,
+                KeyCode::Backspace => {
+                    app.search_query.pop();
+                }
+                KeyCode::Char(s) => app.search_query.push(s),
                 _ => (),
             },
             Window::Section => (),

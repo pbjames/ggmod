@@ -4,11 +4,11 @@ use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Style},
     text::{Line, Span},
-    widgets::{Block, Borders, List, Paragraph},
+    widgets::{Block, Borders, List, ListState, Paragraph},
     Frame,
 };
 
-use crate::gamebanana::builder::FeedFilter;
+use crate::gamebanana::builder::{FeedFilter, TypeFilter};
 
 use super::app::{App, View, Window};
 
@@ -59,9 +59,14 @@ fn section(frame: &mut Frame, app: &App, area: Rect) {
         } else {
             Color::Gray
         }));
-    let text = Paragraph::new(app.search.clone())
-        .block(block)
-        .left_aligned();
+    let text = Paragraph::new(format!(
+        "{:?}\n{:?}\n{:?}",
+        TypeFilter::Mod,
+        TypeFilter::Sound,
+        TypeFilter::WiP
+    ))
+    .block(block)
+    .left_aligned();
     frame.render_widget(text, area);
 }
 
@@ -74,7 +79,7 @@ fn category(frame: &mut Frame, app: &App, area: Rect) {
         } else {
             Color::Gray
         }));
-    let text = Paragraph::new(app.search.clone())
+    let text = Paragraph::new(app.search_query.clone())
         .block(block)
         .left_aligned();
     frame.render_widget(text, area);
@@ -101,7 +106,7 @@ fn search_bar(frame: &mut Frame, app: &App, area: Rect) {
         } else {
             Color::Gray
         }));
-    let search = Paragraph::new(app.search.clone())
+    let search = Paragraph::new(app.search_query.clone())
         .block(block.clone())
         .left_aligned();
     let sorts = Paragraph::new(
@@ -177,8 +182,7 @@ fn browse_view(frame: &mut Frame, app: &App, area: Rect) {
         } else {
             Color::Gray
         }));
-    let text = Paragraph::new("Browse internet")
-        .block(block)
-        .left_aligned();
-    frame.render_widget(text, area);
+    let list: Vec<&str> = app.search_content.keys().map(String::as_ref).collect();
+    let text = List::new(list).block(block);
+    frame.render_stateful_widget(text, area, &mut ListState::default());
 }
