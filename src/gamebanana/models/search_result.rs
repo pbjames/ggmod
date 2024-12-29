@@ -1,6 +1,9 @@
 use serde::{Deserialize, Serialize};
 
-use super::{category::GBModCategory, game::GBGame, preview::GBPreviewMedia};
+use super::{category::GBModCategory, game::GBGame, modpage::GBModPage, preview::GBPreviewMedia};
+
+type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct GBSearchEntry {
     pub date_updated: usize,
@@ -17,4 +20,10 @@ pub struct GBSearchEntry {
     pub description: String,
     pub category: GBModCategory,
     pub game: GBGame,
+}
+
+impl GBSearchEntry {
+    pub fn mod_page(&self) -> Result<GBModPage> {
+        GBModPage::build(self.row)
+    }
 }
