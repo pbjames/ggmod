@@ -1,6 +1,6 @@
 use super::search::Search;
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub enum TypeFilter {
     Mod,
     Sound,
@@ -13,6 +13,7 @@ pub enum SearchFilter<'a> {
     Category { cat_id: usize },
 }
 
+#[derive(Clone)]
 pub enum FeedFilter {
     Recent,
     Featured,

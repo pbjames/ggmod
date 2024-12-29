@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use super::{category::GBModCategory, preview::GBPreviewMedia};
+use super::{category::GBModCategory, game::GBGame, preview::GBPreviewMedia};
 #[derive(Serialize, Deserialize, Debug)]
 pub struct GBSearchEntry {
     pub date_updated: usize,
@@ -16,5 +16,5 @@ pub struct GBSearchEntry {
     pub text: String,
     pub description: String,
     pub category: GBModCategory,
-    //game: GBGame
+    pub game: GBGame,
 }

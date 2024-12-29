@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct GBGame {
+    pub row: usize,
     pub name: String,
-    pub developer: String,
-    pub date: usize,
+    //pub mdate: usize,
 }
