@@ -1,6 +1,5 @@
-use std::{cell::RefCell, collections::HashMap, io};
+use std::{cell::RefCell, collections::HashMap};
 
-use log::info;
 use ratatui::widgets::{ListItem, ListState};
 
 use crate::{
@@ -28,7 +27,9 @@ pub enum View {
     Browse,
 }
 
+// TODO: Turn everything using this into way less code
 pub enum Window {
+    Unfocused,
     Main,
     Search,
     Category,
@@ -80,69 +81,81 @@ impl<'a> App<'a> {
 
     pub fn toggle_view(&mut self) {
         if let Window::Main = self.window {
-            match self.view {
-                View::Manage => self.view = View::Browse,
-                View::Browse => self.view = View::Manage,
+            self.view = match self.view {
+                View::Manage => View::Browse,
+                View::Browse => View::Manage,
             }
         }
     }
 
     pub fn cycle_window_back(&mut self) {
-        match self.window {
-            Window::Main => self.window = Window::Search,
-            Window::Search => self.window = Window::Section,
-            Window::Section => self.window = Window::Category,
-            Window::Category => self.window = Window::Main,
+        self.window = match self.window {
+            Window::Unfocused => Window::Main,
+            Window::Main => Window::Search,
+            Window::Search => Window::Section,
+            Window::Section => Window::Category,
+            Window::Category => Window::Main,
         }
     }
 
     pub fn cycle_window(&mut self) {
-        match self.window {
-            Window::Main => self.window = Window::Category,
-            Window::Category => self.window = Window::Section,
-            Window::Section => self.window = Window::Search,
-            Window::Search => self.window = Window::Main,
+        self.window = match self.window {
+            Window::Unfocused => Window::Main,
+            Window::Main => Window::Category,
+            Window::Category => Window::Section,
+            Window::Section => Window::Search,
+            Window::Search => Window::Main,
         }
     }
 
     pub fn cycle_sort(&mut self) {
-        match self.sort {
-            FeedFilter::Recent => self.sort = FeedFilter::Popular,
-            FeedFilter::Popular => self.sort = FeedFilter::Featured,
-            FeedFilter::Featured => self.sort = FeedFilter::Recent,
+        self.sort = match self.sort {
+            FeedFilter::Recent => FeedFilter::Popular,
+            FeedFilter::Popular => FeedFilter::Featured,
+            FeedFilter::Featured => FeedFilter::Recent,
         }
     }
 
     pub fn cycle_sort_back(&mut self) {
-        match self.sort {
-            FeedFilter::Featured => self.sort = FeedFilter::Popular,
-            FeedFilter::Popular => self.sort = FeedFilter::Recent,
-            FeedFilter::Recent => self.sort = FeedFilter::Featured,
+        self.sort = match self.sort {
+            FeedFilter::Featured => FeedFilter::Popular,
+            FeedFilter::Popular => FeedFilter::Recent,
+            FeedFilter::Recent => FeedFilter::Featured,
         }
     }
 
     pub fn cycle_section(&mut self) {
-        match self.section {
-            TypeFilter::Mod => self.section = TypeFilter::WiP,
-            TypeFilter::WiP => self.section = TypeFilter::Sound,
-            TypeFilter::Sound => self.section = TypeFilter::Mod,
+        self.section = match self.section {
+            TypeFilter::Mod => TypeFilter::WiP,
+            TypeFilter::WiP => TypeFilter::Sound,
+            TypeFilter::Sound => TypeFilter::Mod,
         }
     }
 
     pub fn cycle_section_back(&mut self) {
-        match self.section {
-            TypeFilter::Mod => self.section = TypeFilter::Sound,
-            TypeFilter::Sound => self.section = TypeFilter::WiP,
-            TypeFilter::WiP => self.section = TypeFilter::Mod,
+        self.section = match self.section {
+            TypeFilter::Mod => TypeFilter::Sound,
+            TypeFilter::Sound => TypeFilter::WiP,
+            TypeFilter::WiP => TypeFilter::Mod,
         }
     }
 
     pub fn help_text(&self) -> &str {
         match self.window {
-            Window::Main => "h/l to change",
-            Window::Category => "j/k scroll",
-            Window::Section => "j/k scroll",
-            Window::Search => "type to search\n<arrow keys> to sort",
+            Window::Unfocused => "q - exit",
+            Window::Main => {
+                "\
+                H/L - Switch local/gamebanana mods\n\
+                h/l - local - Switch sides\
+                    - online - Scroll pages"
+            }
+            Window::Category => "j/k - scroll",
+            Window::Section => "j/k - scroll",
+            Window::Search => {
+                "\
+                type to search\n\
+                <arrow keys> to sort"
+            }
         }
     }
 

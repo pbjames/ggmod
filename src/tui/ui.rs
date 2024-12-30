@@ -51,6 +51,7 @@ fn help_window(frame: &mut Frame, app: &App, area: Rect) {
 }
 
 fn section(frame: &mut Frame, app: &App, area: Rect) {
+    // TODO: This style of code is straight ass
     let block = Block::default()
         .title("[4]-Section")
         .borders(Borders::ALL)
@@ -59,15 +60,35 @@ fn section(frame: &mut Frame, app: &App, area: Rect) {
         } else {
             Color::Gray
         }));
-    let text = Paragraph::new(format!(
-        "{:?}\n{:?}\n{:?}",
-        TypeFilter::Mod,
-        TypeFilter::Sound,
-        TypeFilter::WiP
-    ))
-    .block(block)
-    .left_aligned();
-    frame.render_widget(text, area);
+    let sections = Paragraph::new(vec![
+        Line::from(Span::styled(
+            "Mod",
+            Style::default().bg(if let TypeFilter::Mod = app.section {
+                Color::DarkGray
+            } else {
+                Color::Black
+            }),
+        )),
+        Line::from(Span::styled(
+            "Sound",
+            Style::default().bg(if let TypeFilter::Sound = app.section {
+                Color::DarkGray
+            } else {
+                Color::Black
+            }),
+        )),
+        Line::from(Span::styled(
+            "WiP",
+            Style::default().bg(if let TypeFilter::WiP = app.section {
+                Color::DarkGray
+            } else {
+                Color::Black
+            }),
+        )),
+    ])
+    .block(block);
+
+    frame.render_widget(sections, area);
 }
 
 fn category(frame: &mut Frame, app: &App, area: Rect) {
@@ -119,7 +140,7 @@ fn search_bar(frame: &mut Frame, app: &App, area: Rect) {
                     Color::Black
                 }),
             ),
-            Span::raw(" | "),
+            Span::raw("\n"),
             Span::styled(
                 "Popular",
                 Style::default().bg(if let FeedFilter::Popular = app.sort {
@@ -128,7 +149,7 @@ fn search_bar(frame: &mut Frame, app: &App, area: Rect) {
                     Color::Black
                 }),
             ),
-            Span::raw(" | "),
+            Span::raw("\n"),
             Span::styled(
                 "Featured",
                 Style::default().bg(if let FeedFilter::Featured = app.sort {
