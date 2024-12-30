@@ -2,6 +2,7 @@ use clap::{Parser, Subcommand};
 use ggmod::cli::*;
 use ggmod::modz::LocalCollection;
 use ggmod::tui::run_tui;
+use log::LevelFilter;
 
 #[derive(Parser)]
 #[command(version, about, long_about = None, arg_required_else_help = false)]
@@ -65,16 +66,16 @@ enum Commands {
 fn main() {
     let cli = Cli::parse();
     let mut collection = LocalCollection::new();
-    match cli.verbose {
-        0 => (),
-        1 => colog::init(),
-        2 => colog::default_builder()
-            .filter_level(log::LevelFilter::Debug)
-            .init(),
-        _ => colog::default_builder()
-            .filter_level(log::LevelFilter::Trace)
-            .init(),
-    }
+    simple_logging::log_to_file(
+        "log.txt",
+        match cli.verbose {
+            0 => LevelFilter::Off,
+            1 => LevelFilter::Info,
+            2 => LevelFilter::Debug,
+            _ => LevelFilter::Trace,
+        },
+    )
+    .expect("Couldn't setup logging");
     match &cli.command {
         Some(Commands::Download { mod_id, install }) => download(collection, *mod_id, *install),
         Some(Commands::Install { mod_id }) => install(collection, *mod_id),

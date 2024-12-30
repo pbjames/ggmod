@@ -1,0 +1,11 @@
+[00:00:06.109] (78cf4c2f0900) INFO   url generated: https://gamebanana.com/apiv6/Mod/ByName?_sName=*brisket*&_idGameRow=11534&_csvProperties=_sName,_sModelName,_idRow,_aSubmitter,_tsDateUpdated,_tsDateAdded,_aPreviewMedia,_sText,_sDescription,_aCategory,_aRootCategory,_aGame,_nViewCount,_nLikeCount,_nDownloadCount,_bIsNsfw,_aAlternateFileSources&_nPerpage=30&_aArgs[]=_sbIsNsfw = false&_sOrderBy=_tsDateUpdated,DESC&_nPage=0
+[00:00:06.122] (78cf493ff6c0) DEBUG  starting new connection: https://gamebanana.com/
+[00:00:07.032] (78cf4c2f0900) INFO   successful search page conversion
+[00:00:10.413] (78cf4c2f0900) INFO   State before prev call: RefCell { value: ListState { offset: 0, selected: Some(2) } }
+[00:00:10.413] (78cf4c2f0900) INFO   State after prev call: RefCell { value: ListState { offset: 0, selected: Some(1) } }
+[00:00:10.491] (78cf4c2f0900) INFO   State before prev call: RefCell { value: ListState { offset: 0, selected: Some(1) } }
+[00:00:10.491] (78cf4c2f0900) INFO   State after prev call: RefCell { value: ListState { offset: 0, selected: Some(0) } }
+[00:00:10.640] (78cf4c2f0900) INFO   State before prev call: RefCell { value: ListState { offset: 0, selected: Some(0) } }
+[00:00:10.640] (78cf4c2f0900) INFO   State after prev call: RefCell { value: ListState { offset: 0, selected: Some(0) } }
+[00:00:10.821] (78cf4c2f0900) INFO   State before prev call: RefCell { value: ListState { offset: 0, selected: Some(0) } }
+[00:00:10.821] (78cf4c2f0900) INFO   State after prev call: RefCell { value: ListState { offset: 0, selected: Some(0) } }
