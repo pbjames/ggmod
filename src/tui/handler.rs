@@ -42,6 +42,8 @@ fn handle_event(app: &mut App) -> Result<bool> {
         match app.window {
             Window::Main => match key.code {
                 KeyCode::Char('h') => app.toggle_view(),
+                KeyCode::Char('j') => app.next(),
+                KeyCode::Char('k') => app.previous(),
                 KeyCode::Char('l') => app.toggle_view(),
                 _ => (),
             },

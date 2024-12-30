@@ -4,7 +4,7 @@ use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Style},
     text::{Line, Span},
-    widgets::{Block, Borders, List, ListState, Paragraph},
+    widgets::{Block, Borders, List, Paragraph},
     Frame,
 };
 
@@ -12,7 +12,7 @@ use crate::gamebanana::builder::{FeedFilter, TypeFilter};
 
 use super::app::{App, View, Window};
 
-pub fn ui(frame: &mut Frame, app: &App) {
+pub fn ui(frame: &mut Frame, app: &mut App) {
     let view_and_side = Layout::default()
         .direction(Direction::Horizontal)
         .constraints([Constraint::Fill(1), Constraint::Percentage(25)])
@@ -145,7 +145,7 @@ fn search_bar(frame: &mut Frame, app: &App, area: Rect) {
     frame.render_widget(sorts, search_and_sort[1]);
 }
 
-fn view_render(frame: &mut Frame, app: &App, area: Rc<[Rect]>) {
+fn view_render(frame: &mut Frame, app: &mut App, area: Rc<[Rect]>) {
     search_bar(frame, app, area[0]);
     match app.view {
         View::Manage => manage_view(frame, app, area[1]),
@@ -173,7 +173,7 @@ fn manage_view(frame: &mut Frame, app: &App, area: Rect) {
     frame.render_widget(right, halves[1]);
 }
 
-fn browse_view(frame: &mut Frame, app: &App, area: Rect) {
+fn browse_view(frame: &mut Frame, app: &mut App, area: Rect) {
     let block = Block::default()
         .borders(Borders::ALL)
         .title("[2]-Browse")
@@ -182,7 +182,8 @@ fn browse_view(frame: &mut Frame, app: &App, area: Rect) {
         } else {
             Color::Gray
         }));
-    let list: Vec<&str> = app.search_content.keys().map(String::as_ref).collect();
-    let text = List::new(list).block(block);
-    frame.render_stateful_widget(text, area, &mut ListState::default());
+    let text = List::new(app.search_items())
+        .block(block)
+        .highlight_style(Style::default().bg(Color::LightRed));
+    frame.render_stateful_widget(text, area, &mut app.search_state.borrow_mut());
 }

@@ -1,4 +1,7 @@
-use std::{collections::HashMap, io};
+use std::{cell::RefCell, collections::HashMap, io};
+
+use log::info;
+use ratatui::widgets::{ListItem, ListState};
 
 use crate::{
     gamebanana::{
@@ -15,6 +18,7 @@ pub struct App<'a> {
     pub sort: FeedFilter,
     pub section: TypeFilter,
     pub view: View,
+    pub search_state: RefCell<ListState>,
     pub search_query: String,
     pub window: Window,
 }
@@ -46,9 +50,32 @@ impl<'a> App<'a> {
             search_query: String::new(),
             section: TypeFilter::Mod,
             page: 0,
+            search_state: RefCell::new(ListState::default()),
             window: Window::Search,
             sort: FeedFilter::Recent,
         }
+    }
+
+    pub fn clear_search_state(&mut self) {
+        self.search_content.clear();
+        self.search_state = RefCell::new(ListState::default());
+    }
+
+    pub fn next(&mut self) {
+        let n = self.search_content.len();
+        let i = match self.search_state.borrow().selected() {
+            Some(i) => i + (i + 1 < n) as usize,
+            None => 0,
+        };
+        self.search_state.borrow_mut().select(Some(i));
+    }
+
+    pub fn previous(&mut self) {
+        let i = match self.search_state.borrow().selected() {
+            Some(i) => i - (i > 0) as usize,
+            None => 0,
+        };
+        self.search_state.borrow_mut().select(Some(i));
     }
 
     pub fn toggle_view(&mut self) {
@@ -149,12 +176,19 @@ impl<'a> App<'a> {
             .of_type(self.section.clone())
             .with_sort(self.sort.clone())
             .by_search(search_type);
-        let results = search.build().read_page(0)?;
-        self.search_content.clear();
+        let results = search.build().read_page(self.page)?;
+        self.clear_search_state();
         self.search_content = results
             .into_iter()
             .map(|entry| (format_entry(&entry), entry))
             .collect();
         Ok(())
+    }
+
+    pub fn search_items(&self) -> Vec<ListItem> {
+        self.search_content
+            .keys()
+            .map(|s| ListItem::new::<&str>(String::as_ref(s)))
+            .collect()
     }
 }
