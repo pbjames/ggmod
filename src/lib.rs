@@ -19,6 +19,7 @@ pub mod gamebanana {
 pub mod tui {
     mod app;
     mod handler;
+    mod search;
     mod ui;
     pub use handler::run_tui;
 }

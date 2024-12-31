@@ -100,9 +100,7 @@ fn category(frame: &mut Frame, app: &App, area: Rect) {
         } else {
             Color::Gray
         }));
-    let text = Paragraph::new(app.search_query.clone())
-        .block(block)
-        .left_aligned();
+    let text = Paragraph::new("categories").block(block).left_aligned();
     frame.render_widget(text, area);
 }
 
@@ -127,7 +125,7 @@ fn search_bar(frame: &mut Frame, app: &App, area: Rect) {
         } else {
             Color::Gray
         }));
-    let search = Paragraph::new(app.search_query.clone())
+    let search = Paragraph::new(app.search_query().clone())
         .block(block.clone())
         .left_aligned();
     let sorts = Paragraph::new(
@@ -206,5 +204,5 @@ fn browse_view(frame: &mut Frame, app: &mut App, area: Rect) {
     let text = List::new(app.search_items())
         .block(block)
         .highlight_style(Style::default().bg(Color::LightRed));
-    frame.render_stateful_widget(text, area, &mut app.search_state.borrow_mut());
+    frame.render_stateful_widget(text, area, &mut app.search_state().borrow_mut());
 }

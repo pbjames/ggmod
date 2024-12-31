@@ -49,10 +49,8 @@ fn handle_event(app: &mut App) -> Result<bool> {
                 KeyCode::Left => app.cycle_sort_back(),
                 KeyCode::Right => app.cycle_sort(),
                 KeyCode::Enter => app.search()?,
-                KeyCode::Backspace => {
-                    app.search_query.pop();
-                }
-                KeyCode::Char(s) => app.search_query.push(s),
+                KeyCode::Backspace => app.backspace(),
+                KeyCode::Char(s) => app.type_search(s),
                 _ => (),
             },
             Window::Section => match key.code {
@@ -61,20 +59,10 @@ fn handle_event(app: &mut App) -> Result<bool> {
                 _ => (),
             },
             Window::Category => (),
-            // TODO: Maybe remove this cus it confiusing
-            Window::Unfocused => match key.code {
-                KeyCode::Char('q') => return Ok(true),
-                KeyCode::Char('1') | KeyCode::Char('/') => app.window = Window::Search,
-                KeyCode::Char('2') => app.window = Window::Main,
-                KeyCode::Char('3') => app.window = Window::Category,
-                KeyCode::Char('4') => app.window = Window::Section,
-                _ => (),
-            },
         }
         match key.code {
-            KeyCode::Esc => app.window = Window::Unfocused,
-            KeyCode::Tab => app.cycle_window(),
-            KeyCode::BackTab => app.cycle_window_back(),
+            KeyCode::Tab => app.cycle_window_back(),
+            KeyCode::BackTab => app.cycle_window(),
             _ => (),
         }
     }

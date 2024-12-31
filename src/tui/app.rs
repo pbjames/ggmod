@@ -1,45 +1,43 @@
-use std::{cell::RefCell, collections::HashMap};
+use std::{cell::RefCell, iter::Cycle};
 
 use ratatui::widgets::{ListItem, ListState};
+use strum::{EnumIter, IntoEnumIterator};
 
 use crate::{
     gamebanana::{
-        builder::{FeedFilter, SearchBuilder, SearchFilter, TypeFilter},
+        builder::{FeedFilter, TypeFilter},
         models::search_result::GBSearchEntry,
     },
     modz::{LocalCollection, Mod},
 };
 
-pub struct App<'a> {
-    collection: &'a LocalCollection,
-    pub search_content: HashMap<String, GBSearchEntry>,
-    pub page: usize,
-    pub sort: FeedFilter,
-    pub section: TypeFilter,
-    pub view: View,
-    pub search_state: RefCell<ListState>,
-    pub search_query: String,
-    pub window: Window,
-}
+use super::search::Searcher;
+
+type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 pub enum View {
     Manage,
     Browse,
 }
 
-// TODO: Turn everything using this into way less code
+#[derive(EnumIter)]
 pub enum Window {
-    Unfocused,
-    Main,
     Search,
+    Main,
     Category,
     Section,
 }
 
-type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
-
-fn format_entry(entry: &GBSearchEntry) -> String {
-    format!("{:<50}: views {}", entry.name, entry.view_count)
+pub struct App<'a> {
+    collection: &'a LocalCollection,
+    window_cycle: Cycle<WindowIter>,
+    pub browse_search: Searcher<GBSearchEntry>,
+    pub local_search: Searcher<&'a Mod>,
+    pub page: usize,
+    pub sort: FeedFilter,
+    pub section: TypeFilter,
+    pub view: View,
+    pub window: Window,
 }
 
 impl<'a> App<'a> {
@@ -47,36 +45,64 @@ impl<'a> App<'a> {
         App {
             collection,
             view: View::Manage,
-            search_content: HashMap::new(),
-            search_query: String::new(),
+            browse_search: Searcher::new(),
+            local_search: Searcher::new(),
             section: TypeFilter::Mod,
             page: 0,
-            search_state: RefCell::new(ListState::default()),
             window: Window::Search,
+            window_cycle: Window::iter().cycle(),
             sort: FeedFilter::Recent,
         }
     }
 
-    pub fn clear_search_state(&mut self) {
-        self.search_content.clear();
-        self.search_state = RefCell::new(ListState::default());
-    }
-
+    // TODO: Remove all of this and replace with agnostic getter
     pub fn next(&mut self) {
-        let n = self.search_content.len();
-        let i = match self.search_state.borrow().selected() {
-            Some(i) => i + (i + 1 < n) as usize,
-            None => 0,
-        };
-        self.search_state.borrow_mut().select(Some(i));
+        match self.view {
+            View::Manage => self.local_search.next(),
+            View::Browse => self.browse_search.next(),
+        }
     }
 
     pub fn previous(&mut self) {
-        let i = match self.search_state.borrow().selected() {
-            Some(i) => i - (i > 0) as usize,
-            None => 0,
+        match self.view {
+            View::Manage => self.local_search.previous(),
+            View::Browse => self.browse_search.previous(),
+        }
+    }
+
+    pub fn type_search(&mut self, c: char) {
+        match self.view {
+            View::Manage => self.local_search.query.push(c),
+            View::Browse => self.local_search.query.push(c),
+        }
+    }
+
+    pub fn backspace(&mut self) {
+        match self.view {
+            View::Manage => self.local_search.query.pop(),
+            View::Browse => self.local_search.query.pop(),
         };
-        self.search_state.borrow_mut().select(Some(i));
+    }
+
+    pub fn search_query(&self) -> String {
+        match self.view {
+            View::Manage => self.local_search.query.clone(),
+            View::Browse => self.browse_search.query.clone(),
+        }
+    }
+
+    pub fn search_items(&self) -> Vec<ListItem> {
+        match self.view {
+            View::Manage => self.local_search.items(),
+            View::Browse => self.browse_search.items(),
+        }
+    }
+
+    pub fn search_state(&self) -> &RefCell<ListState> {
+        match self.view {
+            View::Manage => &self.local_search.state,
+            View::Browse => &self.browse_search.state,
+        }
     }
 
     pub fn toggle_view(&mut self) {
@@ -88,24 +114,26 @@ impl<'a> App<'a> {
         }
     }
 
-    pub fn cycle_window_back(&mut self) {
-        self.window = match self.window {
-            Window::Unfocused => Window::Main,
-            Window::Main => Window::Search,
-            Window::Search => Window::Section,
-            Window::Section => Window::Category,
-            Window::Category => Window::Main,
+    pub fn search(&mut self) -> Result<()> {
+        // TODO: Make page size = term height
+        match self.view {
+            View::Manage => Ok(()),
+            View::Browse => {
+                self.browse_search
+                    .search(self.section.clone(), self.sort.clone(), self.page)
+            }
         }
     }
 
     pub fn cycle_window(&mut self) {
-        self.window = match self.window {
-            Window::Unfocused => Window::Main,
-            Window::Main => Window::Category,
-            Window::Category => Window::Section,
-            Window::Section => Window::Search,
-            Window::Search => Window::Main,
+        self.window = self.window_cycle.next().unwrap();
+    }
+
+    pub fn cycle_window_back(&mut self) {
+        for _ in 0..Window::iter().len() - 1 {
+            self.window_cycle.next();
         }
+        self.window = self.window_cycle.next().unwrap()
     }
 
     pub fn cycle_sort(&mut self) {
@@ -142,7 +170,6 @@ impl<'a> App<'a> {
 
     pub fn help_text(&self) -> &str {
         match self.window {
-            Window::Unfocused => "q - exit",
             Window::Main => {
                 "\
                 H/L - Switch local/gamebanana mods\n\
@@ -172,36 +199,6 @@ impl<'a> App<'a> {
             .filtered(Box::new(|m: &&Mod| !m.staged))
             .iter()
             .map(|m: &&Mod| String::as_ref(&m.name))
-            .collect()
-    }
-
-    pub fn search(&mut self) -> Result<()> {
-        // TODO: Convert to table format
-        let search_type = if self.search_query.is_empty() {
-            SearchFilter::Game { game_id: 11534 }
-        } else {
-            SearchFilter::Name {
-                search: &self.search_query,
-                game_id: 11534,
-            }
-        };
-        let search = SearchBuilder::new()
-            .of_type(self.section.clone())
-            .with_sort(self.sort.clone())
-            .by_search(search_type);
-        let results = search.build().read_page(self.page)?;
-        self.clear_search_state();
-        self.search_content = results
-            .into_iter()
-            .map(|entry| (format_entry(&entry), entry))
-            .collect();
-        Ok(())
-    }
-
-    pub fn search_items(&self) -> Vec<ListItem> {
-        self.search_content
-            .keys()
-            .map(|s| ListItem::new::<&str>(String::as_ref(s)))
             .collect()
     }
 }
