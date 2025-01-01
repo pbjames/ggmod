@@ -17,6 +17,6 @@ pub fn browse_view(frame: &mut Frame, app: &mut App, area: Rect) {
     );
     let text = List::new(app.search_items())
         .block(block)
-        .highlight_style(Style::default().bg(Color::LightRed));
+        .highlight_style(Style::default().bg(Color::DarkGray));
     frame.render_stateful_widget(text, area, &mut app.search_state().borrow_mut());
 }

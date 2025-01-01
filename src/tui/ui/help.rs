@@ -11,7 +11,7 @@ pub fn help_window(frame: &mut Frame, app: &App, area: Rect) {
     let block = Block::default()
         .title("[?]-Help")
         .borders(Borders::ALL)
-        .border_style(Style::default().fg(Color::Gray));
+        .border_style(Style::default().fg(Color::LightGreen));
     let text = Paragraph::new(String::from("\n") + app.help_text())
         .block(block)
         .centered();
