@@ -1,18 +1,26 @@
+use crate::tui::ui::help::help_window;
 use std::rc::Rc;
 
+use browse::browse_view;
+use category::category;
+use manage::manage_view;
 use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
-    style::{Color, Style},
-    text::{Line, Span},
-    widgets::{Block, Borders, List, Paragraph},
     Frame,
 };
+use search::search_bar;
+use section::section;
 
-use crate::gamebanana::builder::{FeedFilter, TypeFilter};
+use super::app::{App, View};
 
-use super::app::{App, View, Window};
+mod browse;
+mod category;
+mod help;
+mod manage;
+mod search;
+mod section;
 
-pub fn ui(frame: &mut Frame, app: &mut App) {
+pub fn show_ui(frame: &mut Frame, app: &mut App) {
     let view_and_side = Layout::default()
         .direction(Direction::Horizontal)
         .constraints([Constraint::Fill(1), Constraint::Percentage(25)])
@@ -39,178 +47,10 @@ fn side_render(frame: &mut Frame, app: &App, area: Rc<[Rect]>) {
     section(frame, app, area[2]);
 }
 
-fn help_window(frame: &mut Frame, app: &App, area: Rect) {
-    let block = Block::default()
-        .title("[?]-Help")
-        .borders(Borders::ALL)
-        .border_style(Style::default().fg(Color::Gray));
-    let text = Paragraph::new(String::from("\n") + app.help_text())
-        .block(block)
-        .centered();
-    frame.render_widget(text, area);
-}
-
-fn section(frame: &mut Frame, app: &App, area: Rect) {
-    // TODO: This style of code is straight ass
-    let block = Block::default()
-        .title("[4]-Section")
-        .borders(Borders::ALL)
-        .border_style(
-            Style::default().fg(if let Window::Section = app.window.item {
-                Color::White
-            } else {
-                Color::Gray
-            }),
-        );
-    let sections = Paragraph::new(vec![
-        Line::from(Span::styled(
-            "Mod",
-            Style::default().bg(if let TypeFilter::Mod = app.section.item {
-                Color::DarkGray
-            } else {
-                Color::Black
-            }),
-        )),
-        Line::from(Span::styled(
-            "Sound",
-            Style::default().bg(if let TypeFilter::Sound = app.section.item {
-                Color::DarkGray
-            } else {
-                Color::Black
-            }),
-        )),
-        Line::from(Span::styled(
-            "WiP",
-            Style::default().bg(if let TypeFilter::WiP = app.section.item {
-                Color::DarkGray
-            } else {
-                Color::Black
-            }),
-        )),
-    ])
-    .block(block);
-
-    frame.render_widget(sections, area);
-}
-
-fn category(frame: &mut Frame, app: &App, area: Rect) {
-    let block = Block::default()
-        .title("[3]-Category")
-        .borders(Borders::ALL)
-        .border_style(
-            Style::default().fg(if let Window::Category = app.window.item {
-                Color::White
-            } else {
-                Color::Gray
-            }),
-        );
-    let text = Paragraph::new("categories").block(block).left_aligned();
-    frame.render_widget(text, area);
-}
-
-fn search_bar(frame: &mut Frame, app: &App, area: Rect) {
-    let search_and_sort = Layout::default()
-        .direction(Direction::Horizontal)
-        .constraints([Constraint::Fill(1), Constraint::Length(30)])
-        .split(area);
-    let block = Block::default()
-        .title("[1]-Search")
-        .borders(Borders::ALL)
-        .border_style(
-            Style::default().fg(if let Window::Search = app.window.item {
-                Color::White
-            } else {
-                Color::Gray
-            }),
-        );
-    let block2 = Block::default()
-        .title("Sort")
-        .borders(Borders::LEFT.complement())
-        .border_style(
-            Style::default().fg(if let Window::Search = app.window.item {
-                Color::White
-            } else {
-                Color::Gray
-            }),
-        );
-    let search = Paragraph::new(app.search_query().clone())
-        .block(block.clone())
-        .left_aligned();
-    let sorts = Paragraph::new(
-        Line::from_iter([
-            Span::styled(
-                "Recent",
-                Style::default().bg(if let FeedFilter::Recent = app.sort.item {
-                    Color::DarkGray
-                } else {
-                    Color::Black
-                }),
-            ),
-            Span::raw("\n"),
-            Span::styled(
-                "Popular",
-                Style::default().bg(if let FeedFilter::Popular = app.sort.item {
-                    Color::DarkGray
-                } else {
-                    Color::Black
-                }),
-            ),
-            Span::raw("\n"),
-            Span::styled(
-                "Featured",
-                Style::default().bg(if let FeedFilter::Featured = app.sort.item {
-                    Color::DarkGray
-                } else {
-                    Color::Black
-                }),
-            ),
-        ])
-        .centered(),
-    )
-    .block(block2);
-    frame.render_widget(search, search_and_sort[0]);
-    frame.render_widget(sorts, search_and_sort[1]);
-}
-
 fn view_render(frame: &mut Frame, app: &mut App, area: Rc<[Rect]>) {
     search_bar(frame, app, area[0]);
     match app.view {
         View::Manage => manage_view(frame, app, area[1]),
         View::Browse => browse_view(frame, app, area[1]),
     }
-}
-
-fn manage_view(frame: &mut Frame, app: &App, area: Rect) {
-    let halves = Layout::default()
-        .direction(Direction::Horizontal)
-        .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
-        .split(area);
-    let block = Block::default()
-        .borders(Borders::ALL)
-        .title("[2]-Manage-Mods")
-        .border_style(Style::default().fg(if let Window::Main = app.window.item {
-            Color::White
-        } else {
-            Color::Gray
-        }));
-    let left = List::new(app.staged()).block(block.clone());
-    let right = List::new(app.unstaged()).block(block.clone());
-    frame.render_widget(block, area);
-    frame.render_widget(left, halves[0]);
-    frame.render_widget(right, halves[1]);
-}
-
-fn browse_view(frame: &mut Frame, app: &mut App, area: Rect) {
-    let block = Block::default()
-        .borders(Borders::ALL)
-        .title("[2]-Browse")
-        .border_style(Style::default().fg(if let Window::Main = app.window.item {
-            Color::White
-        } else {
-            Color::Gray
-        }));
-    let text = List::new(app.search_items())
-        .block(block)
-        .highlight_style(Style::default().bg(Color::LightRed));
-    frame.render_stateful_widget(text, area, &mut app.search_state().borrow_mut());
 }

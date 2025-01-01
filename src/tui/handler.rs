@@ -8,7 +8,7 @@ use crate::modz::LocalCollection;
 
 use super::{
     app::{App, Window},
-    ui::ui,
+    ui::show_ui,
 };
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
@@ -23,7 +23,7 @@ pub fn run_tui(collection: &mut LocalCollection) {
 
 fn run<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> Result<()> {
     loop {
-        terminal.draw(|f| ui(f, app))?;
+        terminal.draw(|f| show_ui(f, app))?;
         let res = handle_event(app)?;
         if res {
             break;
