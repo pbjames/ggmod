@@ -1,6 +1,6 @@
 use ratatui::{
     layout::Rect,
-    widgets::{Block, Borders, Paragraph},
+    widgets::{Block, Borders, List},
     Frame,
 };
 
@@ -14,6 +14,7 @@ pub fn category(frame: &mut Frame, app: &App, area: Rect) {
         app,
         Window::Category,
     );
-    let text = Paragraph::new("categories").block(block).left_aligned();
+    let iter = app.categories();
+    let text = List::new(iter).block(block);
     frame.render_widget(text, area);
 }

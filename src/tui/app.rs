@@ -1,12 +1,13 @@
 use std::cell::RefCell;
 
+use log::debug;
 use ratatui::widgets::{ListItem, ListState};
 use strum::{EnumIter, IntoEnumIterator};
 
 use crate::{
     gamebanana::{
         builder::{FeedFilter, FeedFilterIter, TypeFilter, TypeFilterIter},
-        models::search_result::GBSearchEntry,
+        models::{category::GBModCategory, search_result::GBSearchEntry},
     },
     modz::{LocalCollection, Mod},
 };
@@ -30,6 +31,7 @@ pub enum Window {
 
 pub struct App<'a> {
     collection: &'a LocalCollection,
+    cat_cache: RefCell<Vec<String>>,
     pub view: View,
     pub browse_search: Searcher<GBSearchEntry>,
     pub local_search: Searcher<&'a Mod>,
@@ -44,6 +46,7 @@ impl<'a> App<'a> {
         App {
             collection,
             view: View::Manage,
+            cat_cache: RefCell::new(vec![]),
             browse_search: Searcher::new(),
             local_search: Searcher::new(),
             section: CyclicState::new(TypeFilter::iter(), TypeFilter::Mod),
@@ -155,5 +158,17 @@ impl<'a> App<'a> {
             .iter()
             .map(|m: &&Mod| String::as_ref(&m.name))
             .collect()
+    }
+
+    pub fn categories(&self) -> Vec<String> {
+        if self.cat_cache.borrow().is_empty() {
+            let cats = GBModCategory::build(12914).unwrap_or_default();
+            let names: Vec<String> = cats.into_iter().map(|cat| cat.name).collect();
+            self.cat_cache.replace(names.clone());
+            names
+        } else {
+            debug!("Cache hit");
+            self.cat_cache.borrow().to_vec()
+        }
     }
 }

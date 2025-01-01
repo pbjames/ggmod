@@ -1,5 +1,6 @@
-use std::{cell::RefCell, collections::HashMap};
+use std::cell::RefCell;
 
+use ordermap::OrderMap;
 use ratatui::widgets::{ListItem, ListState};
 
 use crate::gamebanana::{
@@ -12,7 +13,7 @@ type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 pub struct Searcher<T> {
     pub state: RefCell<ListState>,
     pub query: String,
-    content: HashMap<String, T>,
+    content: OrderMap<String, T>,
 }
 
 impl<T> Searcher<T> {
@@ -20,11 +21,11 @@ impl<T> Searcher<T> {
         Self {
             query: String::new(),
             state: RefCell::new(ListState::default()),
-            content: HashMap::new(),
+            content: OrderMap::new(),
         }
     }
 
-    pub fn refresh(&mut self, content: HashMap<String, T>) {
+    pub fn refresh(&mut self, content: OrderMap<String, T>) {
         self.query.clear();
         self.content.clear();
         self.state.borrow_mut().select(None);
@@ -48,6 +49,13 @@ impl<T> Searcher<T> {
         self.state.borrow_mut().select(Some(i));
     }
 
+    pub fn select(&self) -> Option<&T> {
+        match self.state.borrow().selected() {
+            Some(x) => Some(&self.content[x]),
+            None => None,
+        }
+    }
+
     pub fn items(&self) -> Vec<ListItem> {
         self.content
             .keys()
@@ -62,7 +70,6 @@ impl Searcher<GBSearchEntry> {
     }
 
     pub fn search(&mut self, section: TypeFilter, sort: FeedFilter, page: usize) -> Result<()> {
-        // TODO: Convert to table format
         let search_type = if self.query.is_empty() {
             SearchFilter::Game { game_id: 11534 }
         } else {
