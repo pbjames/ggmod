@@ -55,15 +55,17 @@ fn section(frame: &mut Frame, app: &App, area: Rect) {
     let block = Block::default()
         .title("[4]-Section")
         .borders(Borders::ALL)
-        .border_style(Style::default().fg(if let Window::Section = app.window {
-            Color::White
-        } else {
-            Color::Gray
-        }));
+        .border_style(
+            Style::default().fg(if let Window::Section = app.window.item {
+                Color::White
+            } else {
+                Color::Gray
+            }),
+        );
     let sections = Paragraph::new(vec![
         Line::from(Span::styled(
             "Mod",
-            Style::default().bg(if let TypeFilter::Mod = app.section {
+            Style::default().bg(if let TypeFilter::Mod = app.section.item {
                 Color::DarkGray
             } else {
                 Color::Black
@@ -71,7 +73,7 @@ fn section(frame: &mut Frame, app: &App, area: Rect) {
         )),
         Line::from(Span::styled(
             "Sound",
-            Style::default().bg(if let TypeFilter::Sound = app.section {
+            Style::default().bg(if let TypeFilter::Sound = app.section.item {
                 Color::DarkGray
             } else {
                 Color::Black
@@ -79,7 +81,7 @@ fn section(frame: &mut Frame, app: &App, area: Rect) {
         )),
         Line::from(Span::styled(
             "WiP",
-            Style::default().bg(if let TypeFilter::WiP = app.section {
+            Style::default().bg(if let TypeFilter::WiP = app.section.item {
                 Color::DarkGray
             } else {
                 Color::Black
@@ -95,11 +97,13 @@ fn category(frame: &mut Frame, app: &App, area: Rect) {
     let block = Block::default()
         .title("[3]-Category")
         .borders(Borders::ALL)
-        .border_style(Style::default().fg(if let Window::Category = app.window {
-            Color::White
-        } else {
-            Color::Gray
-        }));
+        .border_style(
+            Style::default().fg(if let Window::Category = app.window.item {
+                Color::White
+            } else {
+                Color::Gray
+            }),
+        );
     let text = Paragraph::new("categories").block(block).left_aligned();
     frame.render_widget(text, area);
 }
@@ -112,19 +116,23 @@ fn search_bar(frame: &mut Frame, app: &App, area: Rect) {
     let block = Block::default()
         .title("[1]-Search")
         .borders(Borders::ALL)
-        .border_style(Style::default().fg(if let Window::Search = app.window {
-            Color::White
-        } else {
-            Color::Gray
-        }));
+        .border_style(
+            Style::default().fg(if let Window::Search = app.window.item {
+                Color::White
+            } else {
+                Color::Gray
+            }),
+        );
     let block2 = Block::default()
         .title("Sort")
         .borders(Borders::LEFT.complement())
-        .border_style(Style::default().fg(if let Window::Search = app.window {
-            Color::White
-        } else {
-            Color::Gray
-        }));
+        .border_style(
+            Style::default().fg(if let Window::Search = app.window.item {
+                Color::White
+            } else {
+                Color::Gray
+            }),
+        );
     let search = Paragraph::new(app.search_query().clone())
         .block(block.clone())
         .left_aligned();
@@ -132,7 +140,7 @@ fn search_bar(frame: &mut Frame, app: &App, area: Rect) {
         Line::from_iter([
             Span::styled(
                 "Recent",
-                Style::default().bg(if let FeedFilter::Recent = app.sort {
+                Style::default().bg(if let FeedFilter::Recent = app.sort.item {
                     Color::DarkGray
                 } else {
                     Color::Black
@@ -141,7 +149,7 @@ fn search_bar(frame: &mut Frame, app: &App, area: Rect) {
             Span::raw("\n"),
             Span::styled(
                 "Popular",
-                Style::default().bg(if let FeedFilter::Popular = app.sort {
+                Style::default().bg(if let FeedFilter::Popular = app.sort.item {
                     Color::DarkGray
                 } else {
                     Color::Black
@@ -150,7 +158,7 @@ fn search_bar(frame: &mut Frame, app: &App, area: Rect) {
             Span::raw("\n"),
             Span::styled(
                 "Featured",
-                Style::default().bg(if let FeedFilter::Featured = app.sort {
+                Style::default().bg(if let FeedFilter::Featured = app.sort.item {
                     Color::DarkGray
                 } else {
                     Color::Black
@@ -180,7 +188,7 @@ fn manage_view(frame: &mut Frame, app: &App, area: Rect) {
     let block = Block::default()
         .borders(Borders::ALL)
         .title("[2]-Manage-Mods")
-        .border_style(Style::default().fg(if let Window::Main = app.window {
+        .border_style(Style::default().fg(if let Window::Main = app.window.item {
             Color::White
         } else {
             Color::Gray
@@ -196,7 +204,7 @@ fn browse_view(frame: &mut Frame, app: &mut App, area: Rect) {
     let block = Block::default()
         .borders(Borders::ALL)
         .title("[2]-Browse")
-        .border_style(Style::default().fg(if let Window::Main = app.window {
+        .border_style(Style::default().fg(if let Window::Main = app.window.item {
             Color::White
         } else {
             Color::Gray

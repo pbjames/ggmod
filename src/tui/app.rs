@@ -1,17 +1,17 @@
-use std::{cell::RefCell, iter::Cycle};
+use std::cell::RefCell;
 
 use ratatui::widgets::{ListItem, ListState};
 use strum::{EnumIter, IntoEnumIterator};
 
 use crate::{
     gamebanana::{
-        builder::{FeedFilter, TypeFilter},
+        builder::{FeedFilter, FeedFilterIter, TypeFilter, TypeFilterIter},
         models::search_result::GBSearchEntry,
     },
     modz::{LocalCollection, Mod},
 };
 
-use super::search::Searcher;
+use super::{search::Searcher, state::CyclicState};
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
@@ -30,14 +30,13 @@ pub enum Window {
 
 pub struct App<'a> {
     collection: &'a LocalCollection,
-    window_cycle: Cycle<WindowIter>,
+    pub view: View,
     pub browse_search: Searcher<GBSearchEntry>,
     pub local_search: Searcher<&'a Mod>,
+    pub sort: CyclicState<FeedFilterIter, FeedFilter>,
+    pub section: CyclicState<TypeFilterIter, TypeFilter>,
+    pub window: CyclicState<WindowIter, Window>,
     pub page: usize,
-    pub sort: FeedFilter,
-    pub section: TypeFilter,
-    pub view: View,
-    pub window: Window,
 }
 
 impl<'a> App<'a> {
@@ -47,11 +46,10 @@ impl<'a> App<'a> {
             view: View::Manage,
             browse_search: Searcher::new(),
             local_search: Searcher::new(),
-            section: TypeFilter::Mod,
+            section: CyclicState::new(TypeFilter::iter(), TypeFilter::Mod),
+            window: CyclicState::new(Window::iter(), Window::Search),
+            sort: CyclicState::new(FeedFilter::iter(), FeedFilter::Recent),
             page: 0,
-            window: Window::Search,
-            window_cycle: Window::iter().cycle(),
-            sort: FeedFilter::Recent,
         }
     }
 
@@ -106,7 +104,7 @@ impl<'a> App<'a> {
     }
 
     pub fn toggle_view(&mut self) {
-        if let Window::Main = self.window {
+        if let Window::Main = self.window.item {
             self.view = match self.view {
                 View::Manage => View::Browse,
                 View::Browse => View::Manage,
@@ -118,58 +116,16 @@ impl<'a> App<'a> {
         // TODO: Make page size = term height
         match self.view {
             View::Manage => Ok(()),
-            View::Browse => {
-                self.browse_search
-                    .search(self.section.clone(), self.sort.clone(), self.page)
-            }
-        }
-    }
-
-    pub fn cycle_window(&mut self) {
-        self.window = self.window_cycle.next().unwrap();
-    }
-
-    pub fn cycle_window_back(&mut self) {
-        for _ in 0..Window::iter().len() - 1 {
-            self.window_cycle.next();
-        }
-        self.window = self.window_cycle.next().unwrap()
-    }
-
-    pub fn cycle_sort(&mut self) {
-        self.sort = match self.sort {
-            FeedFilter::Recent => FeedFilter::Popular,
-            FeedFilter::Popular => FeedFilter::Featured,
-            FeedFilter::Featured => FeedFilter::Recent,
-        }
-    }
-
-    pub fn cycle_sort_back(&mut self) {
-        self.sort = match self.sort {
-            FeedFilter::Featured => FeedFilter::Popular,
-            FeedFilter::Popular => FeedFilter::Recent,
-            FeedFilter::Recent => FeedFilter::Featured,
-        }
-    }
-
-    pub fn cycle_section(&mut self) {
-        self.section = match self.section {
-            TypeFilter::Mod => TypeFilter::WiP,
-            TypeFilter::WiP => TypeFilter::Sound,
-            TypeFilter::Sound => TypeFilter::Mod,
-        }
-    }
-
-    pub fn cycle_section_back(&mut self) {
-        self.section = match self.section {
-            TypeFilter::Mod => TypeFilter::Sound,
-            TypeFilter::Sound => TypeFilter::WiP,
-            TypeFilter::WiP => TypeFilter::Mod,
+            View::Browse => self.browse_search.search(
+                self.section.item.clone(),
+                self.sort.item.clone(),
+                self.page,
+            ),
         }
     }
 
     pub fn help_text(&self) -> &str {
-        match self.window {
+        match self.window.item {
             Window::Main => {
                 "\
                 H/L - Switch local/gamebanana mods\n\

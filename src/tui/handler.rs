@@ -37,7 +37,7 @@ fn handle_event(app: &mut App) -> Result<bool> {
         if key.kind == event::KeyEventKind::Release {
             return Ok(false);
         }
-        match app.window {
+        match app.window.item {
             Window::Main => match key.code {
                 KeyCode::Char('h') => app.toggle_view(),
                 KeyCode::Char('j') => app.next(),
@@ -46,23 +46,24 @@ fn handle_event(app: &mut App) -> Result<bool> {
                 _ => (),
             },
             Window::Search => match key.code {
-                KeyCode::Left => app.cycle_sort_back(),
-                KeyCode::Right => app.cycle_sort(),
+                KeyCode::Left => app.sort.cycle_back(),
+                KeyCode::Right => app.sort.cycle(),
                 KeyCode::Enter => app.search()?,
                 KeyCode::Backspace => app.backspace(),
                 KeyCode::Char(s) => app.type_search(s),
                 _ => (),
             },
             Window::Section => match key.code {
-                KeyCode::Char('j') => app.cycle_section_back(),
-                KeyCode::Char('k') => app.cycle_section(),
+                KeyCode::Char('j') => app.section.cycle(),
+                KeyCode::Char('k') => app.section.cycle_back(),
                 _ => (),
             },
             Window::Category => (),
         }
         match key.code {
-            KeyCode::Tab => app.cycle_window_back(),
-            KeyCode::BackTab => app.cycle_window(),
+            KeyCode::Esc => return Ok(true),
+            KeyCode::Tab => app.window.cycle(),
+            KeyCode::BackTab => app.window.cycle_back(),
             _ => (),
         }
     }
