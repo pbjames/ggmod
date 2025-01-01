@@ -20,7 +20,7 @@ pub enum View {
     Browse,
 }
 
-#[derive(EnumIter)]
+#[derive(EnumIter, PartialEq, PartialOrd)]
 pub enum Window {
     Search,
     Main,
@@ -53,7 +53,6 @@ impl<'a> App<'a> {
         }
     }
 
-    // TODO: Remove all of this and replace with agnostic getter
     pub fn next(&mut self) {
         match self.view {
             View::Manage => self.local_search.next(),
@@ -71,7 +70,7 @@ impl<'a> App<'a> {
     pub fn type_search(&mut self, c: char) {
         match self.view {
             View::Manage => self.local_search.query.push(c),
-            View::Browse => self.local_search.query.push(c),
+            View::Browse => self.browse_search.query.push(c),
         }
     }
 

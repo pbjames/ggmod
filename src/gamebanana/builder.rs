@@ -18,8 +18,8 @@ pub enum SearchFilter<'a> {
 #[derive(EnumIter, Clone, Debug)]
 pub enum FeedFilter {
     Recent,
-    Featured,
     Popular,
+    Featured,
 }
 
 pub struct SearchBuilder<'a> {
