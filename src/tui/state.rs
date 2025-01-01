@@ -11,8 +11,10 @@ where
     I: Clone + Iterator<Item = T>,
 {
     pub fn new(iter: I, item: T) -> Self {
+        let mut cycle = iter.clone().cycle();
+        cycle.next();
         Self {
-            cycle: iter.clone().cycle(),
+            cycle,
             item,
             len: iter.count(),
         }
