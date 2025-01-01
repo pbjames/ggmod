@@ -1,3 +1,12 @@
+mod util;
+use util::*;
+mod browse;
+mod category;
+mod help;
+mod manage;
+mod search;
+mod section;
+
 use crate::tui::ui::help::help_window;
 use std::rc::Rc;
 
@@ -12,13 +21,6 @@ use search::search_bar;
 use section::section;
 
 use super::app::{App, View};
-
-mod browse;
-mod category;
-mod help;
-mod manage;
-mod search;
-mod section;
 
 pub fn show_ui(frame: &mut Frame, app: &mut App) {
     let view_and_side = Layout::default()

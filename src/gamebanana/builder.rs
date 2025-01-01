@@ -2,7 +2,7 @@ use strum::EnumIter;
 
 use super::search::Search;
 
-#[derive(EnumIter, Clone, Debug)]
+#[derive(EnumIter, Clone, Debug, PartialEq)]
 pub enum TypeFilter {
     Mod,
     Sound,
@@ -15,7 +15,7 @@ pub enum SearchFilter<'a> {
     Category { cat_id: usize },
 }
 
-#[derive(EnumIter, Clone, Debug)]
+#[derive(EnumIter, Clone, Debug, PartialEq)]
 pub enum FeedFilter {
     Recent,
     Popular,

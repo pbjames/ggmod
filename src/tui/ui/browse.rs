@@ -7,15 +7,14 @@ use ratatui::{
 
 use crate::tui::app::{App, Window};
 
+use super::hide_unfocused;
+
 pub fn browse_view(frame: &mut Frame, app: &mut App, area: Rect) {
-    let block = Block::default()
-        .borders(Borders::ALL)
-        .title("[2]-Browse")
-        .border_style(Style::default().fg(if let Window::Main = app.window.item {
-            Color::White
-        } else {
-            Color::Gray
-        }));
+    let block = hide_unfocused(
+        Block::default().borders(Borders::ALL).title("[2]-Browse"),
+        app,
+        Window::Main,
+    );
     let text = List::new(app.search_items())
         .block(block)
         .highlight_style(Style::default().bg(Color::LightRed));
