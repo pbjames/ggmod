@@ -1,14 +1,9 @@
+use crate::tui::app::{App, Window};
 use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
     text::Line,
     widgets::{Block, Borders, Paragraph},
     Frame,
-};
-use strum::IntoEnumIterator;
-
-use crate::{
-    gamebanana::builder::FeedFilter,
-    tui::app::{App, Window},
 };
 
 use super::{enum_to_span, hide_unfocused};
@@ -39,6 +34,5 @@ fn sorts_attachment_widget<'a>(app: &App) -> Paragraph<'a> {
         app,
         Window::Search,
     );
-    let spans = FeedFilter::iter().map(|f| enum_to_span(f, app.sort.item.clone()));
-    Paragraph::new(Line::from_iter(spans).centered()).block(block)
+    Paragraph::new(Line::from_iter(enum_to_span(app.sort.item.clone())).centered()).block(block)
 }

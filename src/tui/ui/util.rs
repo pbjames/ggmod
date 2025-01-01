@@ -1,10 +1,11 @@
-use core::fmt;
+use core::fmt::Debug;
 
 use ratatui::{
     style::{Color, Style},
     text::Span,
     widgets::Block,
 };
+use strum::IntoEnumIterator;
 
 use crate::tui::app::{App, Window};
 
@@ -16,11 +17,17 @@ pub fn hide_unfocused<'a>(widget: Block<'a>, app: &App, window: Window) -> Block
     }))
 }
 
-pub fn enum_to_span<'a, T: PartialEq + fmt::Debug>(t: T, app_value: T) -> Span<'a> {
-    let span = Span::from(format!("{:?}", t));
-    span.style(Style::default().bg(if app_value == t {
-        Color::White
-    } else {
-        Color::DarkGray
-    }))
+pub fn enum_to_span<'a, T>(app_value: T) -> Vec<Span<'a>>
+where
+    T: PartialEq + Debug + IntoEnumIterator,
+{
+    T::iter()
+        .map(|t| {
+            Span::from(format!("{:?}", t)).style(Style::default().fg(if app_value == t {
+                Color::LightBlue
+            } else {
+                Color::Gray
+            }))
+        })
+        .collect()
 }
