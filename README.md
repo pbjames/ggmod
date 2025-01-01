@@ -9,10 +9,8 @@
 
 ## Usage
 
-To download the [Ky Alucard colour mod](https://gamebanana.com/mods/513718) and register it being used over Ky Kiske.
-
 ```sh
-ggmod --char KYK https://gamebanana.com/mods/513718
+ggmod
 ```
 
 ## Installation
@@ -22,3 +20,4 @@ cargo install ggmod
 ```
 
 ## Contribution
+sure
