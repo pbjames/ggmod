@@ -1,7 +1,7 @@
 use crate::tui::app::{App, Window};
+use ratatui::text::Line;
 use ratatui::{
     layout::Rect,
-    text::Line,
     widgets::{Block, Borders, Paragraph},
     Frame,
 };
@@ -14,7 +14,8 @@ pub fn section(frame: &mut Frame, app: &App, area: Rect) {
         app,
         Window::Section,
     );
+    let spans = enum_to_span(app.section.item.clone(), Box::new(|t| format!("{:?}\r", t)));
     let sections =
-        Paragraph::new(Line::from_iter(enum_to_span(app.section.item.clone()))).block(block);
+        Paragraph::new(spans.into_iter().map(Line::from).collect::<Vec<Line>>()).block(block);
     frame.render_widget(sections, area);
 }
