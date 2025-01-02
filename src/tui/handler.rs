@@ -58,7 +58,11 @@ fn handle_event(app: &mut App) -> Result<bool> {
                 KeyCode::Char('k') => app.section.cycle_back(),
                 _ => (),
             },
-            Window::Category => (),
+            Window::Category => match key.code {
+                KeyCode::Char('j') => app.categories.next(),
+                KeyCode::Char('k') => app.categories.previous(),
+                _ => (),
+            },
         }
         match key.code {
             KeyCode::Esc => return Ok(true),

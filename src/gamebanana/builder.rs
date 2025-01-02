@@ -27,6 +27,7 @@ pub struct SearchBuilder<'a> {
     search: SearchFilter<'a>,
     feed: FeedFilter,
     per_page: usize,
+    category: Option<usize>,
     nsfw: bool,
 }
 
@@ -37,12 +38,18 @@ impl<'a> SearchBuilder<'a> {
             search: SearchFilter::Game { game_id: 11534 },
             feed: FeedFilter::Featured,
             per_page: 30,
+            category: None,
             nsfw: false,
         }
     }
 
     pub fn of_type(mut self, mod_type: TypeFilter) -> Self {
         self.mod_type = mod_type;
+        self
+    }
+
+    pub fn of_category(mut self, cat_id: Option<usize>) -> Self {
+        self.category = cat_id;
         self
     }
 
@@ -76,7 +83,7 @@ impl<'a> SearchBuilder<'a> {
         }
         match self.search {
             SearchFilter::Category { cat_id } => {
-                part.push_str(&format!("ByCategory?_aCategoryRowIds[]={cat_id}"))
+                part.push_str(&format!("ByCategory?_aCategoryRowIds[]={cat_id}&"))
             }
             SearchFilter::Name { search, game_id } => {
                 part.push_str(&format!("ByName?_sName=*{search}*&_idGameRow={game_id}&"))
@@ -100,6 +107,9 @@ impl<'a> SearchBuilder<'a> {
                 part.push_str("&_aArgs[]=_sbWasFeatured = true& _sOrderBy=_tsDateAdded,DESC")
             }
             FeedFilter::Recent => part.push_str("&_sOrderBy=_tsDateUpdated,DESC"),
+        }
+        if let Some(id) = self.category {
+            part.push_str(&format!("&_aCategoryRowIds[]={id}"))
         }
         Search::base(&part)
     }

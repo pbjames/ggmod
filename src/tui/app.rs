@@ -12,7 +12,7 @@ use crate::{
     modz::{LocalCollection, Mod},
 };
 
-use super::{search::Searcher, state::CyclicState};
+use super::state::{CyclicState, ItemizedState};
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
@@ -33,8 +33,9 @@ pub struct App<'a> {
     collection: &'a LocalCollection,
     cat_cache: RefCell<Vec<String>>,
     pub view: View,
-    pub browse_search: Searcher<GBSearchEntry>,
-    pub local_search: Searcher<&'a Mod>,
+    pub online_items: ItemizedState<GBSearchEntry>,
+    pub local_items: ItemizedState<&'a Mod>,
+    pub categories: ItemizedState<GBModCategory>,
     pub sort: CyclicState<FeedFilterIter, FeedFilter>,
     pub section: CyclicState<TypeFilterIter, TypeFilter>,
     pub window: CyclicState<WindowIter, Window>,
@@ -47,8 +48,9 @@ impl<'a> App<'a> {
             collection,
             view: View::Manage,
             cat_cache: RefCell::new(vec![]),
-            browse_search: Searcher::new(),
-            local_search: Searcher::new(),
+            online_items: ItemizedState::new(),
+            categories: ItemizedState::new(),
+            local_items: ItemizedState::new(),
             section: CyclicState::new(TypeFilter::iter(), TypeFilter::Mod),
             window: CyclicState::new(Window::iter(), Window::Search),
             sort: CyclicState::new(FeedFilter::iter(), FeedFilter::Recent),
@@ -58,50 +60,50 @@ impl<'a> App<'a> {
 
     pub fn next(&mut self) {
         match self.view {
-            View::Manage => self.local_search.next(),
-            View::Browse => self.browse_search.next(),
+            View::Manage => self.local_items.next(),
+            View::Browse => self.online_items.next(),
         }
     }
 
     pub fn previous(&mut self) {
         match self.view {
-            View::Manage => self.local_search.previous(),
-            View::Browse => self.browse_search.previous(),
+            View::Manage => self.local_items.previous(),
+            View::Browse => self.online_items.previous(),
         }
     }
 
     pub fn type_search(&mut self, c: char) {
         match self.view {
-            View::Manage => self.local_search.query.push(c),
-            View::Browse => self.browse_search.query.push(c),
+            View::Manage => self.local_items.query.push(c),
+            View::Browse => self.online_items.query.push(c),
         }
     }
 
     pub fn backspace(&mut self) {
         match self.view {
-            View::Manage => self.local_search.query.pop(),
-            View::Browse => self.local_search.query.pop(),
+            View::Manage => self.local_items.query.pop(),
+            View::Browse => self.online_items.query.pop(),
         };
     }
 
     pub fn search_query(&self) -> String {
         match self.view {
-            View::Manage => self.local_search.query.clone(),
-            View::Browse => self.browse_search.query.clone(),
+            View::Manage => self.local_items.query.clone(),
+            View::Browse => self.online_items.query.clone(),
         }
     }
 
     pub fn search_items(&self) -> Vec<ListItem> {
         match self.view {
-            View::Manage => self.local_search.items(),
-            View::Browse => self.browse_search.items(),
+            View::Manage => self.local_items.items(),
+            View::Browse => self.online_items.items(),
         }
     }
 
     pub fn search_state(&self) -> &RefCell<ListState> {
         match self.view {
-            View::Manage => &self.local_search.state,
-            View::Browse => &self.browse_search.state,
+            View::Manage => &self.local_items.state,
+            View::Browse => &self.online_items.state,
         }
     }
 
@@ -118,9 +120,10 @@ impl<'a> App<'a> {
         // TODO: Make page size = term height
         match self.view {
             View::Manage => Ok(()),
-            View::Browse => self.browse_search.search(
+            View::Browse => self.online_items.search(
                 self.section.item.clone(),
                 self.sort.item.clone(),
+                self.categories.select().map(|cat| cat.row),
                 self.page,
             ),
         }
@@ -160,11 +163,13 @@ impl<'a> App<'a> {
             .collect()
     }
 
-    pub fn categories(&self) -> Vec<String> {
+    pub fn categories(&mut self) -> Vec<String> {
         if self.cat_cache.borrow().is_empty() {
             let cats = GBModCategory::build(12914).unwrap_or_default();
-            let names: Vec<String> = cats.into_iter().map(|cat| cat.name).collect();
+            let names: Vec<String> = cats.iter().map(|cat| cat.name.clone()).collect();
             self.cat_cache.replace(names.clone());
+            self.categories
+                .refresh(names.clone().into_iter().zip(cats).collect());
             names
         } else {
             debug!("Cache hit");

@@ -10,7 +10,7 @@ pub struct GBModCategory {
     pub row: usize,
     pub icon_url: String,
     pub name: String,
-    pub item_count: usize,
+    //pub item_count: usize,
 }
 
 impl GBModCategory {

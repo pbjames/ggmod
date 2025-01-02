@@ -43,7 +43,7 @@ pub fn show_ui(frame: &mut Frame, app: &mut App) {
     side_render(frame, app, side_chunks);
 }
 
-fn side_render(frame: &mut Frame, app: &App, area: Rc<[Rect]>) {
+fn side_render(frame: &mut Frame, app: &mut App, area: Rc<[Rect]>) {
     help_window(frame, app, area[0]);
     category(frame, app, area[1]);
     section(frame, app, area[2]);

@@ -11,6 +11,7 @@ pub struct Search {
 }
 
 impl Search {
+    // TODO: Could use some external cache later on
     pub fn base(s: &str) -> Search {
         Search {
             url: String::from("https://gamebanana.com/apiv6/") + s,
