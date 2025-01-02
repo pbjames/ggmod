@@ -79,21 +79,24 @@ impl ItemizedState<GBSearchEntry> {
         category: Option<usize>,
         page: usize,
     ) -> Result<()> {
-        let search_type = if let Some(cat_id) = category {
-            SearchFilter::Category { cat_id }
-        } else if self.query.is_empty() {
-            SearchFilter::Game { game_id: 11534 }
-        } else {
-            SearchFilter::Name {
-                search: &self.query,
-                game_id: 11534,
+        let search_type = match category {
+            Some(cat_id) if cat_id != 0 => SearchFilter::Category { cat_id },
+            Some(_) | None => {
+                if self.query.is_empty() {
+                    SearchFilter::Game { game_id: 11534 }
+                } else {
+                    SearchFilter::Name {
+                        search: &self.query,
+                        game_id: 11534,
+                    }
+                }
             }
         };
         let search = SearchBuilder::new()
             .of_type(section)
             .with_sort(sort)
             .by_search(search_type)
-            .of_category(category);
+            .of_category(category.filter(|id| *id != 0));
         trace!("Are we searching categorically: {category:?}");
         let results = search.build().read_page(page)?;
         self.refresh(

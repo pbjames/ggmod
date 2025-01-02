@@ -19,7 +19,13 @@ impl GBModCategory {
         let resp = reqwest::blocking::get(Self::url(id))?.text()?;
         let conv = to_human(&resp)?;
         info!("successful mod page conversion");
-        Ok(serde_json::from_str::<Vec<GBModCategory>>(&conv)?)
+        let mut cats = serde_json::from_str::<Vec<GBModCategory>>(&conv)?;
+        cats.append(&mut vec![GBModCategory {
+            row: 0,
+            icon_url: String::from(""),
+            name: String::from("None"),
+        }]);
+        Ok(cats)
     }
 
     fn url(id: usize) -> String {
