@@ -4,7 +4,7 @@ use super::search::Search;
 
 #[derive(EnumIter, Clone, Debug, PartialEq)]
 pub enum TypeFilter {
-    Mod,
+    Skin,
     Sound,
     WiP,
 }
@@ -34,7 +34,7 @@ pub struct SearchBuilder<'a> {
 impl<'a> SearchBuilder<'a> {
     pub fn new() -> SearchBuilder<'a> {
         SearchBuilder {
-            mod_type: TypeFilter::Mod,
+            mod_type: TypeFilter::Skin,
             search: SearchFilter::Game { game_id: 11534 },
             feed: FeedFilter::Featured,
             per_page: 30,
@@ -77,7 +77,7 @@ impl<'a> SearchBuilder<'a> {
         let mut part = String::new();
         let per_page = self.per_page;
         match self.mod_type {
-            TypeFilter::Mod => part.push_str("Mod/"),
+            TypeFilter::Skin => part.push_str("Mod/"),
             TypeFilter::Sound => part.push_str("Sound/"),
             TypeFilter::WiP => part.push_str("Wip/"),
         }

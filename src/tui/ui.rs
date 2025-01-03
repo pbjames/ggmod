@@ -52,7 +52,7 @@ fn side_render(frame: &mut Frame, app: &mut App, area: Rc<[Rect]>) {
 fn view_render(frame: &mut Frame, app: &mut App, area: Rc<[Rect]>) {
     search_bar(frame, app, area[0]);
     match app.view {
-        View::Manage => manage_view(frame, app, area[1]),
+        View::Manage(_) => manage_view(frame, app, area[1]),
         View::Browse => browse_view(frame, app, area[1]),
     }
 }

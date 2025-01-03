@@ -39,10 +39,12 @@ fn handle_event(app: &mut App) -> Result<bool> {
         }
         match app.window.item {
             Window::Main => match key.code {
-                KeyCode::Char('h') => app.toggle_view(),
+                KeyCode::Char('H') => app.toggle_view(),
                 KeyCode::Char('j') => app.next(),
                 KeyCode::Char('k') => app.previous(),
-                KeyCode::Char('l') => app.toggle_view(),
+                KeyCode::Char('L') => app.toggle_view(),
+                KeyCode::Char('h') => app.toggle_sides(),
+                KeyCode::Char('l') => app.toggle_sides(),
                 _ => (),
             },
             Window::Search => match key.code {

@@ -16,8 +16,13 @@ use super::state::{CyclicState, ItemizedState};
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
+pub enum ViewDir {
+    Left,
+    Right,
+}
+
 pub enum View {
-    Manage,
+    Manage(ViewDir),
     Browse,
 }
 
@@ -46,12 +51,12 @@ impl<'a> App<'a> {
     pub fn new(collection: &LocalCollection) -> App {
         App {
             collection,
-            view: View::Manage,
+            view: View::Manage(ViewDir::Left),
             cat_cache: RefCell::new(vec![]),
             online_items: ItemizedState::new(),
             categories: ItemizedState::new(),
             local_items: ItemizedState::new(),
-            section: CyclicState::new(TypeFilter::iter(), TypeFilter::Mod),
+            section: CyclicState::new(TypeFilter::iter(), TypeFilter::Skin),
             window: CyclicState::new(Window::iter(), Window::Search),
             sort: CyclicState::new(FeedFilter::iter(), FeedFilter::Recent),
             page: 0,
@@ -60,49 +65,49 @@ impl<'a> App<'a> {
 
     pub fn next(&mut self) {
         match self.view {
-            View::Manage => self.local_items.next(),
+            View::Manage(_) => self.local_items.next(),
             View::Browse => self.online_items.next(),
         }
     }
 
     pub fn previous(&mut self) {
         match self.view {
-            View::Manage => self.local_items.previous(),
+            View::Manage(_) => self.local_items.previous(),
             View::Browse => self.online_items.previous(),
         }
     }
 
     pub fn type_search(&mut self, c: char) {
         match self.view {
-            View::Manage => self.local_items.query.push(c),
+            View::Manage(_) => self.local_items.query.push(c),
             View::Browse => self.online_items.query.push(c),
         }
     }
 
     pub fn backspace(&mut self) {
         match self.view {
-            View::Manage => self.local_items.query.pop(),
+            View::Manage(_) => self.local_items.query.pop(),
             View::Browse => self.online_items.query.pop(),
         };
     }
 
     pub fn search_query(&self) -> String {
         match self.view {
-            View::Manage => self.local_items.query.clone(),
+            View::Manage(_) => self.local_items.query.clone(),
             View::Browse => self.online_items.query.clone(),
         }
     }
 
     pub fn search_items(&self) -> Vec<ListItem> {
         match self.view {
-            View::Manage => self.local_items.items(),
+            View::Manage(_) => self.local_items.items(),
             View::Browse => self.online_items.items(),
         }
     }
 
     pub fn search_state(&self) -> &RefCell<ListState> {
         match self.view {
-            View::Manage => &self.local_items.state,
+            View::Manage(_) => &self.local_items.state,
             View::Browse => &self.online_items.state,
         }
     }
@@ -110,8 +115,8 @@ impl<'a> App<'a> {
     pub fn toggle_view(&mut self) {
         if let Window::Main = self.window.item {
             self.view = match self.view {
-                View::Manage => View::Browse,
-                View::Browse => View::Manage,
+                View::Manage(_) => View::Browse,
+                View::Browse => View::Manage(ViewDir::Left),
             }
         }
     }
@@ -119,7 +124,7 @@ impl<'a> App<'a> {
     pub fn search(&mut self) -> Result<()> {
         // TODO: Make page size = term height
         match self.view {
-            View::Manage => Ok(()),
+            View::Manage(_) => Ok(()),
             View::Browse => self.online_items.search(
                 self.section.item.clone(),
                 self.sort.item.clone(),
@@ -174,6 +179,14 @@ impl<'a> App<'a> {
         } else {
             debug!("Cache hit");
             self.cat_cache.borrow().to_vec()
+        }
+    }
+
+    pub fn toggle_sides(&mut self) {
+        match self.view {
+            View::Manage(ViewDir::Left) => self.view = View::Manage(ViewDir::Right),
+            View::Manage(ViewDir::Right) => self.view = View::Manage(ViewDir::Left),
+            View::Browse => (),
         }
     }
 }
