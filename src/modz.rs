@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 use std::{fs, path};
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
+type MutModClosure = dyn FnMut(&mut Mod) -> Result<()>;
 
 pub struct LocalCollection {
     registry_path: path::PathBuf,
@@ -51,13 +52,20 @@ impl LocalCollection {
         Ok(())
     }
 
-    pub fn apply_on_mod(&mut self, id: usize, mut closure: Box<dyn FnMut(&mut Mod)>) -> Result<()> {
+    pub fn apply_on_mod(&mut self, id: usize, mut closure: Box<MutModClosure>) -> Result<()> {
         for m in &mut self.mods {
             if m.id == id {
-                closure(m);
+                closure(m)?;
             }
         }
         Ok(())
+    }
+
+    pub fn toggle(&mut self, id: usize) -> Result<()> {
+        self.apply_on_mod(
+            id,
+            Box::new(|m: &mut Mod| if m.staged { m.unstage() } else { m.stage() }),
+        )
     }
 
     fn write_mods(&self) -> Option<()> {

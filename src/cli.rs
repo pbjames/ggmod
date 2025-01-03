@@ -69,19 +69,13 @@ pub fn download(mut col: LocalCollection, mod_id: usize, do_install: bool) {
 }
 
 pub fn install(mut col: LocalCollection, mod_id: usize) {
-    col.apply_on_mod(
-        mod_id,
-        Box::new(|mod_| mod_.stage().expect("Couldn't add mod to GGST")),
-    )
-    .expect("add ");
+    col.apply_on_mod(mod_id, Box::new(|mod_| mod_.stage()))
+        .expect("add ");
 }
 
 pub fn uninstall(mut col: LocalCollection, mod_id: usize) {
-    col.apply_on_mod(
-        mod_id,
-        Box::new(|mod_| mod_.unstage().expect("Couldn't remove mod from GGST")),
-    )
-    .expect("couldnt rempve stuf");
+    col.apply_on_mod(mod_id, Box::new(|mod_| mod_.unstage()))
+        .expect("couldnt rempve stuf");
 }
 
 /// We use this since the user won't necessarily know what files a mod will include
