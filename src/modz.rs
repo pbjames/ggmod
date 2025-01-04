@@ -1,6 +1,7 @@
 use crate::{gamebanana::models::modpage::GBModPage, ggst_path, registry};
 
 use log::{info, trace};
+use ordermap::OrderMap;
 use serde::{Deserialize, Serialize};
 use std::{fs, path};
 
@@ -56,6 +57,20 @@ impl LocalCollection {
             }
         }
         Ok(())
+    }
+
+    pub fn unstaged_mods(&self) -> OrderMap<String, &Mod> {
+        self.mods_iter()
+            .filter(|m| !m.staged)
+            .map(|m| (m.name.clone(), m))
+            .collect::<OrderMap<String, &Mod>>()
+    }
+
+    pub fn staged_mods(&self) -> OrderMap<String, &Mod> {
+        self.mods_iter()
+            .filter(|m| m.staged)
+            .map(|m| (m.name.clone(), m))
+            .collect::<OrderMap<String, &Mod>>()
     }
 
     pub fn toggle(&mut self, id: usize) -> Result<()> {

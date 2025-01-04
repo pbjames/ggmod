@@ -5,7 +5,10 @@ use ratatui::{
     Frame,
 };
 
-use crate::tui::app::{App, Window};
+use crate::tui::{
+    app::{App, Window},
+    state::ItemizedState,
+};
 
 use super::hide_unfocused;
 
@@ -15,7 +18,7 @@ pub fn category(frame: &mut Frame, app: &mut App, area: Rect) {
         app,
         Window::Category,
     );
-    let iter = app.categories();
+    let iter = { app.categories.items() };
     let text = List::new(iter)
         .block(block)
         .highlight_style(Style::default().fg(Color::Blue));

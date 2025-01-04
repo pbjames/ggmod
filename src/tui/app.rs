@@ -1,18 +1,15 @@
 use std::cell::RefCell;
 
-use log::debug;
+use ordermap::OrderMap;
 use ratatui::widgets::{ListItem, ListState};
 use strum::{EnumIter, IntoEnumIterator};
 
 use crate::{
-    gamebanana::{
-        builder::{FeedFilter, FeedFilterIter, TypeFilter, TypeFilterIter},
-        models::{category::GBModCategory, search_result::GBSearchEntry},
-    },
+    gamebanana::builder::{FeedFilter, FeedFilterIter, TypeFilter, TypeFilterIter},
     modz::{LocalCollection, Mod},
 };
 
-use super::state::{CyclicState, ItemizedState};
+use super::state::{Categories, CyclicState, ItemizedState, LocalItems, OnlineItems};
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
@@ -38,12 +35,11 @@ pub enum Window {
 
 pub struct App<'a> {
     collection: &'a mut LocalCollection,
-    cat_cache: RefCell<Vec<String>>,
     pub view: View,
-    pub online_items: ItemizedState<GBSearchEntry>,
-    pub staged_items: ItemizedState<&'a Mod>,
-    pub unstaged_items: ItemizedState<&'a Mod>,
-    pub categories: ItemizedState<GBModCategory>,
+    pub online_items: OnlineItems,
+    pub staged_items: LocalItems<'a>,
+    pub unstaged_items: LocalItems<'a>,
+    pub categories: Categories,
     pub sort: CyclicState<FeedFilterIter, FeedFilter>,
     pub section: CyclicState<TypeFilterIter, TypeFilter>,
     pub window: CyclicState<WindowIter, Window>,
@@ -51,15 +47,18 @@ pub struct App<'a> {
 }
 
 impl<'a> App<'a> {
-    pub fn new(collection: &mut LocalCollection) -> App {
+    pub fn new(
+        collection: &'a mut LocalCollection,
+        staged_items: OrderMap<String, &'a Mod>,
+        unstaged_items: OrderMap<String, &'a Mod>,
+    ) -> App<'a> {
         App {
             collection,
             view: View::Manage(ViewDir::Left),
-            cat_cache: RefCell::new(vec![]),
-            online_items: ItemizedState::new(),
-            categories: ItemizedState::new(),
-            staged_items: ItemizedState::new(),
-            unstaged_items: ItemizedState::new(),
+            online_items: OnlineItems::new(),
+            categories: Categories::new(),
+            staged_items: LocalItems::new(staged_items),
+            unstaged_items: LocalItems::new(unstaged_items),
             section: CyclicState::new(TypeFilter::iter(), TypeFilter::Skin),
             window: CyclicState::new(Window::iter(), Window::Search),
             sort: CyclicState::new(FeedFilter::iter(), FeedFilter::Recent),
@@ -200,36 +199,6 @@ impl<'a> App<'a> {
                 type to search\n\
                 <arrow keys> to sort"
             }
-        }
-    }
-
-    pub fn staged(&self) -> Vec<&str> {
-        self.collection
-            .filtered(Box::new(|m: &&Mod| m.staged))
-            .iter()
-            .map(|m: &&Mod| String::as_ref(&m.name))
-            .collect()
-    }
-
-    pub fn unstaged(&self) -> Vec<&str> {
-        self.collection
-            .filtered(Box::new(|m: &&Mod| !m.staged))
-            .iter()
-            .map(|m: &&Mod| String::as_ref(&m.name))
-            .collect()
-    }
-
-    pub fn categories(&mut self) -> Vec<String> {
-        if self.cat_cache.borrow().is_empty() {
-            let cats = GBModCategory::build(12914).unwrap_or_default();
-            let names: Vec<String> = cats.iter().map(|cat| cat.name.clone()).collect();
-            self.cat_cache.replace(names.clone());
-            self.categories
-                .refresh(names.clone().into_iter().zip(cats).collect());
-            names
-        } else {
-            debug!("Cache hit");
-            self.cat_cache.borrow().to_vec()
         }
     }
 

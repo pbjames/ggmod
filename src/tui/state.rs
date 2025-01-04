@@ -11,7 +11,7 @@ use crate::{
         builder::{FeedFilter, SearchBuilder, SearchFilter, TypeFilter},
         models::{category::GBModCategory, search_result::GBSearchEntry},
     },
-    modz::{LocalCollection, Mod},
+    modz::Mod,
 };
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
@@ -26,7 +26,8 @@ pub trait ItemizedState {
     //    }
     //}
     fn query(&mut self) -> &mut String;
-    fn content(&mut self) -> &mut OrderMap<String, Self::T>;
+    fn content(&self) -> &OrderMap<String, Self::T>;
+    fn content_mut(&mut self) -> &mut OrderMap<String, Self::T>;
     fn state(&self) -> &RefCell<ListState>;
     fn set_content(&mut self, content: OrderMap<String, Self::T>);
     fn search(
@@ -39,7 +40,7 @@ pub trait ItemizedState {
 
     fn refresh(&mut self, content: OrderMap<String, Self::T>) {
         self.query().clear();
-        self.content().clear();
+        self.content_mut().clear();
         self.state().borrow_mut().select(None);
         self.set_content(content);
     }
@@ -72,7 +73,7 @@ pub trait ItemizedState {
         }
     }
 
-    fn items(&mut self) -> Vec<ListItem> {
+    fn items(&self) -> Vec<ListItem> {
         self.content()
             .keys()
             .map(|s| ListItem::new::<&str>(String::as_ref(s)))
@@ -103,7 +104,11 @@ impl ItemizedState for OnlineItems {
         &mut self.query
     }
 
-    fn content(&mut self) -> &mut OrderMap<String, Self::T> {
+    fn content(&self) -> &OrderMap<String, Self::T> {
+        &self.content
+    }
+
+    fn content_mut(&mut self) -> &mut OrderMap<String, Self::T> {
         &mut self.content
     }
 
@@ -159,18 +164,16 @@ pub struct LocalItems<'a> {
     pub query: String,
     pub state: RefCell<ListState>,
     pub content: OrderMap<String, &'a Mod>,
-    pub collection: &'a LocalCollection,
 }
 
 impl<'a> LocalItems<'a> {
-    pub fn new(col: &'a LocalCollection, predicate: Box<dyn FnMut(&&Mod) -> bool>) -> Self {
-        let content = col
-            .mods_iter()
-            .filter(predicate)
-            .map(|m| (m.name.clone(), m))
-            .collect::<OrderMap<String, &Mod>>();
+    pub fn new(content: OrderMap<String, &'a Mod>) -> Self {
+        //let content = col
+        //    .mods_iter()
+        //    .filter(predicate)
+        //    .map(|m| (m.name.clone(), m))
+        //    .collect::<OrderMap<String, &Mod>>();
         Self {
-            collection: col,
             query: String::new(),
             state: RefCell::new(ListState::default()),
             content,
@@ -185,7 +188,11 @@ impl<'a> ItemizedState for LocalItems<'a> {
         &mut self.query
     }
 
-    fn content(&mut self) -> &mut OrderMap<String, Self::T> {
+    fn content(&self) -> &OrderMap<String, Self::T> {
+        &self.content
+    }
+
+    fn content_mut(&mut self) -> &mut OrderMap<String, Self::T> {
         &mut self.content
     }
 
@@ -219,7 +226,11 @@ impl Categories {
         Self {
             query: String::new(),
             state: RefCell::new(ListState::default()),
-            content: OrderMap::new(),
+            content: GBModCategory::build(12914)
+                .unwrap_or_default()
+                .into_iter()
+                .map(|cat: GBModCategory| (cat.name.clone(), cat))
+                .collect(),
         }
     }
 }
@@ -231,7 +242,11 @@ impl ItemizedState for Categories {
         &mut self.query
     }
 
-    fn content(&mut self) -> &mut OrderMap<String, Self::T> {
+    fn content(&self) -> &OrderMap<String, Self::T> {
+        &self.content
+    }
+
+    fn content_mut(&mut self) -> &mut OrderMap<String, Self::T> {
         &mut self.content
     }
 

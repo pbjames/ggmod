@@ -1,3 +1,5 @@
+use std::cell::RefCell;
+
 use clap::{Parser, Subcommand};
 use ggmod::cli::*;
 use ggmod::modz::LocalCollection;
@@ -65,7 +67,7 @@ enum Commands {
 
 fn main() {
     let cli = Cli::parse();
-    let mut collection = LocalCollection::new();
+    let collection = LocalCollection::new();
     simple_logging::log_to_file(
         "log.txt",
         match cli.verbose {
@@ -96,6 +98,6 @@ fn main() {
             *popular,
             *recent,
         ),
-        None => run_tui(&mut collection),
+        None => run_tui(RefCell::new(collection)),
     }
 }

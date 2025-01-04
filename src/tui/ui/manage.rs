@@ -5,7 +5,10 @@ use ratatui::{
     Frame,
 };
 
-use crate::tui::app::{App, View, ViewDir, Window};
+use crate::tui::{
+    app::{App, View, ViewDir, Window},
+    state::ItemizedState,
+};
 
 pub fn manage_view(frame: &mut Frame, app: &App, area: Rect) {
     let halves = Layout::default()
@@ -26,8 +29,8 @@ pub fn manage_view(frame: &mut Frame, app: &App, area: Rect) {
             View::Manage(ViewDir::Right) if app.window.item == Window::Main => Color::White,
             _ => Color::DarkGray,
         }));
-    let left = List::new(app.staged()).block(block_left);
-    let right = List::new(app.unstaged()).block(block_right);
+    let left = List::new(app.staged_items.items()).block(block_left);
+    let right = List::new(app.unstaged_items.items()).block(block_right);
     //frame.render_widget(block, area);
     frame.render_widget(left, halves[0]);
     frame.render_widget(right, halves[1]);

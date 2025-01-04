@@ -1,3 +1,5 @@
+use std::cell::RefCell;
+
 use ratatui::{
     crossterm::event::{self, Event, KeyCode},
     prelude::Backend,
@@ -14,18 +16,22 @@ use super::{
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
-pub fn run_tui(collection: &mut LocalCollection) {
+pub fn run_tui(collection: RefCell<LocalCollection>) {
     let mut terminal = ratatui::init();
-    let mut app = App::new(collection);
-    let app_result = run(&mut terminal, &mut app);
+    let app_result = run(&mut terminal, collection);
     ratatui::restore();
     app_result.unwrap();
 }
 
-fn run<B: Backend>(terminal: &mut Terminal<B>, app: &mut App) -> Result<()> {
+fn run<B: Backend>(terminal: &mut Terminal<B>, collection: RefCell<LocalCollection>) -> Result<()> {
+    let coll = collection.borrow();
+    let mut coll_mut = collection.borrow_mut();
+    let staged_items = coll.unstaged_mods();
+    let unstaged_items = coll.staged_mods();
+    let mut app = App::new(&mut coll_mut, staged_items, unstaged_items);
     loop {
-        terminal.draw(|f| show_ui(f, app))?;
-        let res = handle_event(app)?;
+        terminal.draw(|f| show_ui(f, &mut app))?;
+        let res = handle_event(&mut app)?;
         if res {
             break;
         }
