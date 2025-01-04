@@ -42,7 +42,7 @@ pub fn search(
 }
 
 pub fn list_all(col: LocalCollection) {
-    for mod_ in col.mods() {
+    for mod_ in col.mods_iter() {
         println!(
             "[{}] [{}] {}: {}",
             if mod_.staged { "+" } else { " " },

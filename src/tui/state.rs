@@ -6,20 +6,87 @@ use log::trace;
 use ordermap::OrderMap;
 use ratatui::widgets::{ListItem, ListState};
 
-use crate::gamebanana::{
-    builder::{FeedFilter, SearchBuilder, SearchFilter, TypeFilter},
-    models::search_result::GBSearchEntry,
+use crate::{
+    gamebanana::{
+        builder::{FeedFilter, SearchBuilder, SearchFilter, TypeFilter},
+        models::{category::GBModCategory, search_result::GBSearchEntry},
+    },
+    modz::{LocalCollection, Mod},
 };
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
-pub struct ItemizedState<T> {
-    pub state: RefCell<ListState>,
-    pub query: String,
-    content: OrderMap<String, T>,
+pub trait ItemizedState {
+    type T;
+    //pub fn new() -> Self {
+    //    Self {
+    //        query: String::new(),
+    //        state: RefCell::new(ListState::default()),
+    //        content: OrderMap::new(),
+    //    }
+    //}
+    fn query(&mut self) -> &mut String;
+    fn content(&mut self) -> &mut OrderMap<String, Self::T>;
+    fn state(&self) -> &RefCell<ListState>;
+    fn set_content(&mut self, content: OrderMap<String, Self::T>);
+    fn search(
+        &mut self,
+        section: TypeFilter,
+        sort: FeedFilter,
+        category: Option<usize>,
+        page: usize,
+    ) -> Result<()>;
+
+    fn refresh(&mut self, content: OrderMap<String, Self::T>) {
+        self.query().clear();
+        self.content().clear();
+        self.state().borrow_mut().select(None);
+        self.set_content(content);
+    }
+
+    fn next(&mut self) {
+        let n = self.content().len();
+        let i = match self.state().borrow().selected() {
+            Some(i) => i + (i + 1 < n) as usize,
+            None => 0,
+        };
+        self.state().borrow_mut().select(Some(i));
+    }
+
+    fn previous(&mut self) {
+        let i = match self.state().borrow().selected() {
+            Some(i) => i - (i > 0) as usize,
+            None => 0,
+        };
+        self.state().borrow_mut().select(Some(i));
+    }
+
+    fn select(&mut self) -> Option<&Self::T> {
+        let state = self.state().borrow();
+        match state.selected() {
+            Some(x) => {
+                drop(state);
+                Some(&self.content()[x])
+            }
+            None => None,
+        }
+    }
+
+    fn items(&mut self) -> Vec<ListItem> {
+        self.content()
+            .keys()
+            .map(|s| ListItem::new::<&str>(String::as_ref(s)))
+            .collect()
+    }
 }
 
-impl<T> ItemizedState<T> {
+pub struct OnlineItems {
+    pub query: String,
+    pub state: RefCell<ListState>,
+    pub content: OrderMap<String, GBSearchEntry>,
+}
+
+impl OnlineItems {
     pub fn new() -> Self {
         Self {
             query: String::new(),
@@ -27,58 +94,37 @@ impl<T> ItemizedState<T> {
             content: OrderMap::new(),
         }
     }
+}
 
-    pub fn refresh(&mut self, content: OrderMap<String, T>) {
-        self.query.clear();
-        self.content.clear();
-        self.state.borrow_mut().select(None);
+impl ItemizedState for OnlineItems {
+    type T = GBSearchEntry;
+
+    fn query(&mut self) -> &mut String {
+        &mut self.query
+    }
+
+    fn content(&mut self) -> &mut OrderMap<String, Self::T> {
+        &mut self.content
+    }
+
+    fn state(&self) -> &RefCell<ListState> {
+        &self.state
+    }
+
+    fn set_content(&mut self, content: OrderMap<String, Self::T>) {
         self.content = content;
     }
 
-    pub fn next(&mut self) {
-        let n = self.content.len();
-        let i = match self.state.borrow().selected() {
-            Some(i) => i + (i + 1 < n) as usize,
-            None => 0,
-        };
-        self.state.borrow_mut().select(Some(i));
-    }
-
-    pub fn previous(&mut self) {
-        let i = match self.state.borrow().selected() {
-            Some(i) => i - (i > 0) as usize,
-            None => 0,
-        };
-        self.state.borrow_mut().select(Some(i));
-    }
-
-    pub fn select(&self) -> Option<&T> {
-        match self.state.borrow().selected() {
-            Some(x) => Some(&self.content[x]),
-            None => None,
-        }
-    }
-
-    pub fn items(&self) -> Vec<ListItem> {
-        self.content
-            .keys()
-            .map(|s| ListItem::new::<&str>(String::as_ref(s)))
-            .collect()
-    }
-}
-
-impl ItemizedState<GBSearchEntry> {
-    fn format_entry(entry: &GBSearchEntry) -> String {
-        format!("{:<50}: views {}", entry.name, entry.view_count)
-    }
-
-    pub fn search(
+    fn search(
         &mut self,
         section: TypeFilter,
         sort: FeedFilter,
         category: Option<usize>,
         page: usize,
     ) -> Result<()> {
+        fn format_entry(entry: &GBSearchEntry) -> String {
+            format!("{:<50}: views {}", entry.name, entry.view_count)
+        }
         let search_type = match category {
             Some(cat_id) if cat_id != 0 => SearchFilter::Category { cat_id },
             Some(_) | None => {
@@ -102,9 +148,108 @@ impl ItemizedState<GBSearchEntry> {
         self.refresh(
             results
                 .into_iter()
-                .map(|entry| (Self::format_entry(&entry), entry))
+                .map(|entry| (format_entry(&entry), entry))
                 .collect(),
         );
+        Ok(())
+    }
+}
+
+pub struct LocalItems<'a> {
+    pub query: String,
+    pub state: RefCell<ListState>,
+    pub content: OrderMap<String, &'a Mod>,
+    pub collection: &'a LocalCollection,
+}
+
+impl<'a> LocalItems<'a> {
+    pub fn new(col: &'a LocalCollection, predicate: Box<dyn FnMut(&&Mod) -> bool>) -> Self {
+        let content = col
+            .mods_iter()
+            .filter(predicate)
+            .map(|m| (m.name.clone(), m))
+            .collect::<OrderMap<String, &Mod>>();
+        Self {
+            collection: col,
+            query: String::new(),
+            state: RefCell::new(ListState::default()),
+            content,
+        }
+    }
+}
+
+impl<'a> ItemizedState for LocalItems<'a> {
+    type T = &'a Mod;
+
+    fn query(&mut self) -> &mut String {
+        &mut self.query
+    }
+
+    fn content(&mut self) -> &mut OrderMap<String, Self::T> {
+        &mut self.content
+    }
+
+    fn state(&self) -> &RefCell<ListState> {
+        &self.state
+    }
+
+    fn set_content(&mut self, content: OrderMap<String, Self::T>) {
+        self.content = content;
+    }
+
+    fn search(
+        &mut self,
+        _section: TypeFilter,
+        _sort: FeedFilter,
+        _category: Option<usize>,
+        _page: usize,
+    ) -> Result<()> {
+        Ok(())
+    }
+}
+
+pub struct Categories {
+    pub query: String,
+    pub state: RefCell<ListState>,
+    pub content: OrderMap<String, GBModCategory>,
+}
+
+impl Categories {
+    pub fn new() -> Self {
+        Self {
+            query: String::new(),
+            state: RefCell::new(ListState::default()),
+            content: OrderMap::new(),
+        }
+    }
+}
+
+impl ItemizedState for Categories {
+    type T = GBModCategory;
+
+    fn query(&mut self) -> &mut String {
+        &mut self.query
+    }
+
+    fn content(&mut self) -> &mut OrderMap<String, Self::T> {
+        &mut self.content
+    }
+
+    fn state(&self) -> &RefCell<ListState> {
+        &self.state
+    }
+
+    fn set_content(&mut self, content: OrderMap<String, Self::T>) {
+        self.content = content;
+    }
+
+    fn search(
+        &mut self,
+        _section: TypeFilter,
+        _sort: FeedFilter,
+        _category: Option<usize>,
+        _page: usize,
+    ) -> Result<()> {
         Ok(())
     }
 }

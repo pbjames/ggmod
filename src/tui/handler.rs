@@ -8,6 +8,7 @@ use crate::modz::LocalCollection;
 
 use super::{
     app::{App, Window},
+    state::ItemizedState,
     ui::show_ui,
 };
 

@@ -7,6 +7,7 @@ use std::{fs, path};
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 type MutModClosure = dyn FnMut(&mut Mod) -> Result<()>;
 
+#[derive(Clone)]
 pub struct LocalCollection {
     registry_path: path::PathBuf,
     mods: Vec<Mod>,
@@ -28,8 +29,8 @@ impl LocalCollection {
         }
     }
 
-    pub fn mods(&self) -> &Vec<Mod> {
-        &self.mods
+    pub fn mods_iter(&self) -> impl Iterator<Item = &Mod> {
+        self.mods.iter()
     }
 
     fn load_mods(path: &path::PathBuf) -> Option<Vec<Mod>> {
@@ -38,12 +39,8 @@ impl LocalCollection {
         Some(serde_json::from_reader(file).unwrap())
     }
 
-    pub fn registry_has_id(&self, mod_id: usize) -> bool {
+    pub fn contains(&self, mod_id: usize) -> bool {
         self.mods.iter().any(|m| m.id == mod_id)
-    }
-
-    pub fn filtered(&self, p: Box<dyn FnMut(&&Mod) -> bool>) -> Vec<&Mod> {
-        self.mods.iter().filter(p).collect()
     }
 
     pub fn register_online_mod(&mut self, gbmod: GBModPage, idx: usize) -> Result<()> {
