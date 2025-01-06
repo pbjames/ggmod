@@ -60,11 +60,11 @@ impl<'a> App<'a> {
             sort: CyclicState::new(FeedFilter::iter(), FeedFilter::Recent),
             page: 0,
         };
-        this.init();
+        this.reregister();
         this
     }
 
-    pub fn init(&mut self) {
+    pub fn reregister(&mut self) {
         let staged = self.collection.staged_mods();
         let unstaged = self.collection.unstaged_mods();
         self.staged_items.refresh(staged);
@@ -174,6 +174,7 @@ impl<'a> App<'a> {
                 }
             }
         }
+        self.reregister();
     }
 
     pub fn search(&mut self) -> Result<()> {

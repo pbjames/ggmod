@@ -8,7 +8,7 @@ use std::{fs, path};
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 type MutModClosure = dyn FnMut(&mut Mod) -> Result<()>;
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct LocalCollection {
     registry_path: path::PathBuf,
     mods: Vec<Mod>,

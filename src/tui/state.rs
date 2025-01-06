@@ -59,15 +59,9 @@ pub trait ItemizedState {
         self.state().borrow_mut().select(Some(i));
     }
 
-    fn select(&mut self) -> Option<&Self::T> {
+    fn select(&self) -> Option<&Self::T> {
         let state = self.state().borrow();
-        match state.selected() {
-            Some(x) => {
-                drop(state);
-                Some(&self.content()[x])
-            }
-            None => None,
-        }
+        state.selected().map(|x| &self.content()[x])
     }
 
     fn items(&self) -> Vec<ListItem> {
