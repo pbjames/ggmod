@@ -29,9 +29,13 @@ pub fn manage_view(frame: &mut Frame, app: &App, area: Rect) {
             View::Manage(ViewDir::Right) if app.window.item == Window::Main => Color::White,
             _ => Color::DarkGray,
         }));
-    let left = List::new(app.staged_items.items()).block(block_left);
-    let right = List::new(app.unstaged_items.items()).block(block_right);
+    let left = List::new(app.staged_items.items())
+        .block(block_left)
+        .highlight_style(Color::Yellow);
+    let right = List::new(app.unstaged_items.items())
+        .block(block_right)
+        .highlight_style(Color::Yellow);
     //frame.render_widget(block, area);
-    frame.render_widget(left, halves[0]);
-    frame.render_widget(right, halves[1]);
+    frame.render_stateful_widget(left, halves[0], &mut app.staged_items.state.borrow_mut());
+    frame.render_stateful_widget(right, halves[1], &mut app.unstaged_items.state.borrow_mut());
 }
