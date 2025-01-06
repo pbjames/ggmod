@@ -38,17 +38,7 @@ fn handle_event(app: &mut App) -> Result<bool> {
         if key.kind == event::KeyEventKind::Release {
             return Ok(false);
         }
-        match app.window.item {
-            Window::Main => match key.code {
-                KeyCode::Char('H') => app.toggle_view(),
-                KeyCode::Char('j') => app.next(),
-                KeyCode::Char('k') => app.previous(),
-                KeyCode::Char('L') => app.toggle_view(),
-                KeyCode::Char('h') => app.toggle_sides(),
-                KeyCode::Char('l') => app.toggle_sides(),
-                KeyCode::Enter => app.select(),
-                _ => (),
-            },
+        match &app.window.item {
             Window::Search => match key.code {
                 KeyCode::Left => app.sort.cycle_back(),
                 KeyCode::Right => app.sort.cycle(),
@@ -57,16 +47,38 @@ fn handle_event(app: &mut App) -> Result<bool> {
                 KeyCode::Char(s) => app.type_search(s),
                 _ => (),
             },
-            Window::Section => match key.code {
-                KeyCode::Char('j') => app.section.cycle(),
-                KeyCode::Char('k') => app.section.cycle_back(),
-                _ => (),
-            },
-            Window::Category => match key.code {
-                KeyCode::Char('j') => app.categories.next(),
-                KeyCode::Char('k') => app.categories.previous(),
-                _ => (),
-            },
+            other_window => {
+                match other_window {
+                    Window::Main => match key.code {
+                        KeyCode::Char('H') => app.toggle_view(),
+                        KeyCode::Char('j') => app.next(),
+                        KeyCode::Char('k') => app.previous(),
+                        KeyCode::Char('L') => app.toggle_view(),
+                        KeyCode::Char('h') => app.toggle_sides(),
+                        KeyCode::Char('l') => app.toggle_sides(),
+                        KeyCode::Enter => app.select(),
+                        _ => (),
+                    },
+                    Window::Section => match key.code {
+                        KeyCode::Char('j') => app.section.cycle(),
+                        KeyCode::Char('k') => app.section.cycle_back(),
+                        _ => (),
+                    },
+                    Window::Category => match key.code {
+                        KeyCode::Char('j') => app.categories.next(),
+                        KeyCode::Char('k') => app.categories.previous(),
+                        _ => (),
+                    },
+                    _ => (),
+                };
+                match key.code {
+                    KeyCode::Char('1') => app.window.cycle_to(Window::Search),
+                    KeyCode::Char('2') => app.window.cycle_to(Window::Main),
+                    KeyCode::Char('3') => app.window.cycle_to(Window::Category),
+                    KeyCode::Char('4') => app.window.cycle_to(Window::Section),
+                    _ => (),
+                }
+            }
         }
         match key.code {
             KeyCode::Esc => return Ok(true),

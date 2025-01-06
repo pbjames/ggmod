@@ -269,6 +269,7 @@ pub struct CyclicState<I, T> {
 impl<I, T> CyclicState<I, T>
 where
     I: Clone + Iterator<Item = T>,
+    T: std::cmp::PartialEq,
 {
     pub fn new(iter: I, item: T) -> Self {
         let mut cycle = iter.clone().cycle();
@@ -277,6 +278,12 @@ where
             cycle,
             item,
             len: iter.count(),
+        }
+    }
+
+    pub fn cycle_to(&mut self, item: T) {
+        while self.item != item {
+            self.cycle();
         }
     }
 

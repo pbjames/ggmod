@@ -203,7 +203,7 @@ impl<'a> App<'a> {
             Window::Search => {
                 "\
                 type to search\n\
-                <arrow keys> to sort"
+                <arrow keys> to sort by different stuff"
             }
         }
     }

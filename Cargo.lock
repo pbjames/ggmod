@@ -634,7 +634,7 @@ dependencies = [
 
 [[package]]
 name = "ggmod"
-version = "1.8.0"
+version = "1.8.1"
 dependencies = [
  "clap",
  "compress-tools",
