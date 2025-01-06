@@ -9,6 +9,10 @@ use super::{category::GBModCategory, file::GBFile};
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
+fn default_nsfw() -> bool {
+    false
+}
+
 /// Use this to download mods, inspect them and add them to a local collection
 #[derive(Serialize, Deserialize, Debug)]
 pub struct GBModPage {
@@ -17,13 +21,26 @@ pub struct GBModPage {
     pub name: String,
     pub description: String,
     pub row: usize,
-    #[serde(default = "uhh")]
+    #[serde(default = "default_nsfw")]
     pub is_nsfw: bool,
 }
 
-fn uhh() -> bool {
-    false
-}
+const PROPS: [&str; 14] = [
+    "_sName",
+    "_aGame",
+    "_sProfileUrl",
+    "_aPreviewMedia",
+    "_sDescription",
+    "_aSubmitter",
+    "_aCategory",
+    "_aSuperCategory",
+    "_aFiles",
+    "_tsDateUpdated",
+    "_aAlternateFileSources",
+    "_bHasUpdates",
+    "_aLatestUpdates",
+    "_idRow",
+];
 
 impl GBModPage {
     pub fn download_file(&self, idx: usize) -> Result<path::PathBuf> {
@@ -44,12 +61,6 @@ impl GBModPage {
 
     fn url(id: usize) -> String {
         // INFO: Could switch to api.gamebanana.com in future
-        format!(
-            "https://gamebanana.com/apiv6/Mod/{id}?\
-        _csvProperties=_sName,_aGame,_sProfileUrl,_aPreviewMedia,\
-        _sDescription,_aSubmitter,_aCategory,_aSuperCategory,_aFiles,\
-        _tsDateUpdated,_aAlternateFileSources,_bHasUpdates,_aLatestUpdates,\
-        _idRow",
-        )
+        format!("https://gamebanana.com/apiv6/Mod/{id}?_csvProperties=") + &PROPS.join(",")
     }
 }

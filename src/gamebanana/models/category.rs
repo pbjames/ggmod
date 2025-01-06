@@ -20,11 +20,14 @@ impl GBModCategory {
         let conv = to_human(&resp)?;
         info!("successful mod page conversion");
         let mut cats = serde_json::from_str::<Vec<GBModCategory>>(&conv)?;
-        cats.append(&mut vec![GBModCategory {
-            row: 0,
-            icon_url: String::from(""),
-            name: String::from("None"),
-        }]);
+        cats.insert(
+            0,
+            GBModCategory {
+                row: 0,
+                icon_url: String::from(""),
+                name: String::from("None"),
+            },
+        );
         Ok(cats)
     }
 

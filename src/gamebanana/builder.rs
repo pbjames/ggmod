@@ -31,6 +31,26 @@ pub struct SearchBuilder<'a> {
     nsfw: bool,
 }
 
+const PROPS: [&str; 17] = [
+    "_sName",
+    "_sModelName",
+    "_idRow",
+    "_aSubmitter",
+    "_tsDateUpdated",
+    "_tsDateAdded",
+    "_aPreviewMedia",
+    "_sText",
+    "_sDescription",
+    "_aCategory",
+    "_aRootCategory",
+    "_aGame",
+    "_nViewCount",
+    "_nLikeCount",
+    "_nDownloadCount",
+    "_bIsNsfw",
+    "_aAlternateFileSources",
+];
+
 impl<'a> SearchBuilder<'a> {
     pub fn new() -> SearchBuilder<'a> {
         SearchBuilder {
@@ -91,12 +111,11 @@ impl<'a> SearchBuilder<'a> {
             SearchFilter::Game { game_id } => {
                 part.push_str(&format!("ByGame?_aGameRowIds[]={game_id}&"))
             }
-        }
+        };
         part.push_str(&format!(
-            "_csvProperties=_sName,_sModelName,_idRow,\
-            _aSubmitter,_tsDateUpdated,_tsDateAdded,_aPreviewMedia,_sText,\
-            _sDescription,_aCategory,_aRootCategory,_aGame,_nViewCount,_nLikeCount,\
-            _nDownloadCount,_bIsNsfw,_aAlternateFileSources&_nPerpage={per_page}",
+            "_csvProperties={}&_nPerpage={}",
+            PROPS.join(","),
+            per_page
         ));
         if !self.nsfw {
             part.push_str("&_aArgs[]=_sbIsNsfw = false");

@@ -28,9 +28,7 @@ pub fn search_bar(frame: &mut Frame, app: &App, area: Rect) {
 
 fn sorts_attachment_widget<'a>(app: &App) -> Paragraph<'a> {
     let block = hide_unfocused(
-        Block::default()
-            .title("Sort")
-            .borders(Borders::LEFT.complement()),
+        Block::default().borders(Borders::LEFT.complement()),
         app,
         Window::Search,
     );

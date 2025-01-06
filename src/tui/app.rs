@@ -1,6 +1,5 @@
 use std::cell::RefCell;
 
-use log::trace;
 use ordermap::ordermap;
 use ratatui::{
     style::{Color, Style},
@@ -147,7 +146,6 @@ impl<'a> App<'a> {
 
     pub fn select(&mut self) {
         // TODO: Redo
-        trace!("Doth been called");
         match self.view.clone() {
             View::Manage(dir) => match dir {
                 ViewDir::Left => {
@@ -219,7 +217,7 @@ impl<'a> App<'a> {
             .map(|id| {
                 let (name, char, desc, nsfw) = self.mod_id_translate(**id);
                 Row::new(vec![name, desc, char]).style(if nsfw {
-                    Style::default().bg(Color::LightRed)
+                    Style::default().fg(Color::LightRed)
                 } else {
                     Style::default()
                 })
@@ -234,7 +232,7 @@ impl<'a> App<'a> {
             .map(|id| {
                 let (name, char, desc, nsfw) = self.mod_id_translate(**id);
                 Row::new(vec![name, desc, char]).style(if nsfw {
-                    Style::default().bg(Color::LightRed)
+                    Style::default().fg(Color::LightRed)
                 } else {
                     Style::default()
                 })
@@ -256,7 +254,7 @@ impl<'a> App<'a> {
                     ent.description.clone(),
                 ])
                 .style(if ent.is_nsfw {
-                    Style::default().bg(Color::LightRed)
+                    Style::default().fg(Color::LightRed)
                 } else {
                     Style::default()
                 })
@@ -288,4 +286,5 @@ impl<'a> App<'a> {
             .next()
             .unwrap()
     }
+    // TODO: Mod variant popup + search bar listens to 1 2 3 4 when empty + toasts
 }

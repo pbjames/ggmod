@@ -51,11 +51,11 @@ fn handle_event(app: &mut App) -> Result<bool> {
                 match other_window {
                     Window::Main => match key.code {
                         KeyCode::Char('H') => app.toggle_view(),
-                        KeyCode::Char('j') => app.next(),
-                        KeyCode::Char('k') => app.previous(),
                         KeyCode::Char('L') => app.toggle_view(),
-                        KeyCode::Char('h') => app.toggle_sides(),
-                        KeyCode::Char('l') => app.toggle_sides(),
+                        KeyCode::Char('h') | KeyCode::Left => app.toggle_sides(),
+                        KeyCode::Char('l') | KeyCode::Right => app.toggle_sides(),
+                        KeyCode::Char('j') | KeyCode::Down => app.next(),
+                        KeyCode::Char('k') | KeyCode::Up => app.previous(),
                         KeyCode::Enter => app.select(),
                         _ => (),
                     },

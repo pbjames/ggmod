@@ -15,13 +15,7 @@ type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 pub trait ItemizedState {
     type T;
-    //pub fn new() -> Self {
-    //    Self {
-    //        query: String::new(),
-    //        state: RefCell::new(TableState::default()),
-    //        content: OrderMap::new(),
-    //    }
-    //}
+
     fn query(&mut self) -> &mut String;
     fn content(&self) -> &OrderMap<String, Self::T>;
     fn content_mut(&mut self) -> &mut OrderMap<String, Self::T>;
@@ -156,11 +150,6 @@ pub struct LocalItems {
 
 impl LocalItems {
     pub fn new(content: OrderMap<String, usize>) -> Self {
-        //let content = col
-        //    .mods_iter()
-        //    .filter(predicate)
-        //    .map(|m| (m.name.clone(), m))
-        //    .collect::<OrderMap<String, &Mod>>();
         Self {
             query: String::new(),
             state: RefCell::new(TableState::default()),
@@ -214,6 +203,7 @@ impl Categories {
         Self {
             query: String::new(),
             state: RefCell::new(TableState::default()),
+            // TODO: Find out where this magic number come from
             content: GBModCategory::build(12914)
                 .unwrap_or_default()
                 .into_iter()
@@ -266,7 +256,7 @@ pub struct CyclicState<I, T> {
 impl<I, T> CyclicState<I, T>
 where
     I: Clone + Iterator<Item = T>,
-    T: std::cmp::PartialEq,
+    T: PartialEq,
 {
     pub fn new(iter: I, item: T) -> Self {
         let mut cycle = iter.clone().cycle();

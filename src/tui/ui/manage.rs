@@ -18,7 +18,6 @@ pub fn manage_view(frame: &mut Frame, app: &App, area: Rect) {
         .direction(Direction::Horizontal)
         .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
         .split(area);
-    // Name, desc, char
     frame.render_stateful_widget(
         left_table(app, widths).header(header.clone()),
         halves[0],
@@ -32,31 +31,29 @@ pub fn manage_view(frame: &mut Frame, app: &App, area: Rect) {
 }
 
 fn left_table<'a>(app: &'a App, widths: [Constraint; 3]) -> Table<'a> {
+    let block = Block::default()
+        .borders(Borders::ALL)
+        .title("[2]-Staged")
+        .style(Style::default().fg(match app.view {
+            View::Manage(ViewDir::Left) if app.window.item == Window::Main => Color::White,
+            _ => Color::DarkGray,
+        }));
     Table::new(app.staged_items_repr(), widths)
         .widths(widths)
-        .block(
-            Block::default()
-                .borders(Borders::ALL)
-                .title("[2]-Staged")
-                .style(Style::default().fg(match app.view {
-                    View::Manage(ViewDir::Left) if app.window.item == Window::Main => Color::White,
-                    _ => Color::DarkGray,
-                })),
-        )
+        .block(block)
         .row_highlight_style(Color::Yellow)
 }
 
 fn right_table<'a>(app: &'a App, widths: [Constraint; 3]) -> Table<'a> {
+    let block = Block::default()
+        .borders(Borders::ALL)
+        .title("Unstaged")
+        .style(Style::default().fg(match app.view {
+            View::Manage(ViewDir::Right) if app.window.item == Window::Main => Color::White,
+            _ => Color::DarkGray,
+        }));
     Table::new(app.unstaged_items_repr(), widths)
         .widths(widths)
-        .block(
-            Block::default()
-                .borders(Borders::ALL)
-                .title("Unstaged")
-                .style(Style::default().fg(match app.view {
-                    View::Manage(ViewDir::Right) if app.window.item == Window::Main => Color::White,
-                    _ => Color::DarkGray,
-                })),
-        )
+        .block(block)
         .row_highlight_style(Color::Yellow)
 }
