@@ -6,12 +6,9 @@ use log::trace;
 use ordermap::OrderMap;
 use ratatui::widgets::{ListItem, ListState};
 
-use crate::{
-    gamebanana::{
-        builder::{FeedFilter, SearchBuilder, SearchFilter, TypeFilter},
-        models::{category::GBModCategory, search_result::GBSearchEntry},
-    },
-    modz::Mod,
+use crate::gamebanana::{
+    builder::{FeedFilter, SearchBuilder, SearchFilter, TypeFilter},
+    models::{category::GBModCategory, search_result::GBSearchEntry},
 };
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
@@ -160,14 +157,14 @@ impl ItemizedState for OnlineItems {
     }
 }
 
-pub struct LocalItems<'a> {
+pub struct LocalItems {
     pub query: String,
     pub state: RefCell<ListState>,
-    pub content: OrderMap<String, &'a Mod>,
+    pub content: OrderMap<String, usize>,
 }
 
-impl<'a> LocalItems<'a> {
-    pub fn new(content: OrderMap<String, &'a Mod>) -> Self {
+impl LocalItems {
+    pub fn new(content: OrderMap<String, usize>) -> Self {
         //let content = col
         //    .mods_iter()
         //    .filter(predicate)
@@ -181,8 +178,8 @@ impl<'a> LocalItems<'a> {
     }
 }
 
-impl<'a> ItemizedState for LocalItems<'a> {
-    type T = &'a Mod;
+impl ItemizedState for LocalItems {
+    type T = usize;
 
     fn query(&mut self) -> &mut String {
         &mut self.query

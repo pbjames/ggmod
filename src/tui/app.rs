@@ -1,12 +1,12 @@
 use std::cell::RefCell;
 
-use ordermap::OrderMap;
+use ordermap::ordermap;
 use ratatui::widgets::{ListItem, ListState};
 use strum::{EnumIter, IntoEnumIterator};
 
 use crate::{
     gamebanana::builder::{FeedFilter, FeedFilterIter, TypeFilter, TypeFilterIter},
-    modz::{LocalCollection, Mod},
+    modz::LocalCollection,
 };
 
 use super::state::{Categories, CyclicState, ItemizedState, LocalItems, OnlineItems};
@@ -37,8 +37,8 @@ pub struct App<'a> {
     collection: &'a mut LocalCollection,
     pub view: View,
     pub online_items: OnlineItems,
-    pub staged_items: LocalItems<'a>,
-    pub unstaged_items: LocalItems<'a>,
+    pub staged_items: LocalItems,
+    pub unstaged_items: LocalItems,
     pub categories: Categories,
     pub sort: CyclicState<FeedFilterIter, FeedFilter>,
     pub section: CyclicState<TypeFilterIter, TypeFilter>,
@@ -47,23 +47,28 @@ pub struct App<'a> {
 }
 
 impl<'a> App<'a> {
-    pub fn new(
-        collection: &'a mut LocalCollection,
-        staged_items: OrderMap<String, &'a Mod>,
-        unstaged_items: OrderMap<String, &'a Mod>,
-    ) -> App<'a> {
-        App {
+    pub fn new(collection: &'a mut LocalCollection) -> App<'a> {
+        let mut this = App {
             collection,
             view: View::Manage(ViewDir::Left),
             online_items: OnlineItems::new(),
             categories: Categories::new(),
-            staged_items: LocalItems::new(staged_items),
-            unstaged_items: LocalItems::new(unstaged_items),
+            staged_items: LocalItems::new(ordermap! {}),
+            unstaged_items: LocalItems::new(ordermap! {}),
             section: CyclicState::new(TypeFilter::iter(), TypeFilter::Skin),
             window: CyclicState::new(Window::iter(), Window::Search),
             sort: CyclicState::new(FeedFilter::iter(), FeedFilter::Recent),
             page: 0,
-        }
+        };
+        this.init();
+        this
+    }
+
+    pub fn init(&mut self) {
+        let staged = self.collection.staged_mods();
+        let unstaged = self.collection.unstaged_mods();
+        self.staged_items.refresh(staged);
+        self.unstaged_items.refresh(unstaged);
     }
 
     // TODO: This code is straight ass, all of it
@@ -152,12 +157,12 @@ impl<'a> App<'a> {
             View::Manage(dir) => match dir {
                 ViewDir::Left => {
                     if let Some(m) = self.staged_items.select() {
-                        self.collection.toggle(m.id).unwrap();
+                        self.collection.toggle(*m).unwrap();
                     }
                 }
                 ViewDir::Right => {
                     if let Some(m) = self.unstaged_items.select() {
-                        self.collection.toggle(m.id).unwrap();
+                        self.collection.toggle(*m).unwrap();
                     }
                 }
             },

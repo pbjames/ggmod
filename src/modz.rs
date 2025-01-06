@@ -30,8 +30,8 @@ impl LocalCollection {
         }
     }
 
-    pub fn mods_iter(&self) -> impl Iterator<Item = &Mod> {
-        self.mods.iter()
+    pub fn mods(&self) -> &Vec<Mod> {
+        &self.mods
     }
 
     fn load_mods(path: &path::PathBuf) -> Option<Vec<Mod>> {
@@ -59,18 +59,20 @@ impl LocalCollection {
         Ok(())
     }
 
-    pub fn unstaged_mods(&self) -> OrderMap<String, &Mod> {
-        self.mods_iter()
+    pub fn unstaged_mods(&self) -> OrderMap<String, usize> {
+        self.mods()
+            .iter()
             .filter(|m| !m.staged)
-            .map(|m| (m.name.clone(), m))
-            .collect::<OrderMap<String, &Mod>>()
+            .map(|m| (m.name.clone(), m.id))
+            .collect()
     }
 
-    pub fn staged_mods(&self) -> OrderMap<String, &Mod> {
-        self.mods_iter()
+    pub fn staged_mods(&self) -> OrderMap<String, usize> {
+        self.mods()
+            .iter()
             .filter(|m| m.staged)
-            .map(|m| (m.name.clone(), m))
-            .collect::<OrderMap<String, &Mod>>()
+            .map(|m| (m.name.clone(), m.id))
+            .collect()
     }
 
     pub fn toggle(&mut self, id: usize) -> Result<()> {
