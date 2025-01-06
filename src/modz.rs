@@ -24,6 +24,7 @@ impl Default for LocalCollection {
 impl LocalCollection {
     pub fn new() -> LocalCollection {
         let path = registry().unwrap_or_default();
+        trace!("New collection instance");
         LocalCollection {
             registry_path: path.clone(),
             mods: Self::load_mods(&path).unwrap_or_default(),
@@ -36,7 +37,6 @@ impl LocalCollection {
 
     fn load_mods(path: &path::PathBuf) -> Option<Vec<Mod>> {
         let file = fs::OpenOptions::new().read(true).open(path).unwrap();
-        trace!("Reading {:?} into LocalCollection", path);
         Some(serde_json::from_reader(file).unwrap())
     }
 
@@ -60,6 +60,7 @@ impl LocalCollection {
     }
 
     pub fn unstaged_mods(&self) -> OrderMap<String, usize> {
+        trace!("Looking for unstaged mods, {:?}", self.mods);
         self.mods()
             .iter()
             .filter(|m| !m.staged)
@@ -107,6 +108,7 @@ pub struct Mod {
     pub name: String,
     pub description: String,
     pub staged: bool,
+    pub is_nsfw: bool,
 }
 
 impl Mod {
@@ -118,6 +120,7 @@ impl Mod {
             name: gbmod.name,
             description: gbmod.description,
             staged: false,
+            is_nsfw: gbmod.is_nsfw,
         };
         Ok(m)
     }

@@ -65,7 +65,6 @@ enum Commands {
 
 fn main() {
     let cli = Cli::parse();
-    let mut collection = LocalCollection::new();
     simple_logging::log_to_file(
         "log.txt",
         match cli.verbose {
@@ -76,6 +75,7 @@ fn main() {
         },
     )
     .expect("Couldn't setup logging");
+    let mut collection = LocalCollection::new();
     match &cli.command {
         Some(Commands::Download { mod_id, install }) => download(collection, *mod_id, *install),
         Some(Commands::Install { mod_id }) => install(collection, *mod_id),

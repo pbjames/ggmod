@@ -4,7 +4,7 @@ use std::cell::RefCell;
 
 use log::trace;
 use ordermap::OrderMap;
-use ratatui::widgets::{ListItem, ListState};
+use ratatui::widgets::TableState;
 
 use crate::gamebanana::{
     builder::{FeedFilter, SearchBuilder, SearchFilter, TypeFilter},
@@ -18,14 +18,14 @@ pub trait ItemizedState {
     //pub fn new() -> Self {
     //    Self {
     //        query: String::new(),
-    //        state: RefCell::new(ListState::default()),
+    //        state: RefCell::new(TableState::default()),
     //        content: OrderMap::new(),
     //    }
     //}
     fn query(&mut self) -> &mut String;
     fn content(&self) -> &OrderMap<String, Self::T>;
     fn content_mut(&mut self) -> &mut OrderMap<String, Self::T>;
-    fn state(&self) -> &RefCell<ListState>;
+    fn state(&self) -> &RefCell<TableState>;
     fn set_content(&mut self, content: OrderMap<String, Self::T>);
     fn search(
         &mut self,
@@ -64,17 +64,14 @@ pub trait ItemizedState {
         state.selected().map(|x| &self.content()[x])
     }
 
-    fn items(&self) -> Vec<ListItem> {
-        self.content()
-            .keys()
-            .map(|s| ListItem::new::<&str>(String::as_ref(s)))
-            .collect()
+    fn values(&self) -> Vec<&Self::T> {
+        self.content().values().collect()
     }
 }
 
 pub struct OnlineItems {
     pub query: String,
-    pub state: RefCell<ListState>,
+    pub state: RefCell<TableState>,
     pub content: OrderMap<String, GBSearchEntry>,
 }
 
@@ -82,7 +79,7 @@ impl OnlineItems {
     pub fn new() -> Self {
         Self {
             query: String::new(),
-            state: RefCell::new(ListState::default()),
+            state: RefCell::new(TableState::default()),
             content: OrderMap::new(),
         }
     }
@@ -103,7 +100,7 @@ impl ItemizedState for OnlineItems {
         &mut self.content
     }
 
-    fn state(&self) -> &RefCell<ListState> {
+    fn state(&self) -> &RefCell<TableState> {
         &self.state
     }
 
@@ -153,7 +150,7 @@ impl ItemizedState for OnlineItems {
 
 pub struct LocalItems {
     pub query: String,
-    pub state: RefCell<ListState>,
+    pub state: RefCell<TableState>,
     pub content: OrderMap<String, usize>,
 }
 
@@ -166,7 +163,7 @@ impl LocalItems {
         //    .collect::<OrderMap<String, &Mod>>();
         Self {
             query: String::new(),
-            state: RefCell::new(ListState::default()),
+            state: RefCell::new(TableState::default()),
             content,
         }
     }
@@ -187,7 +184,7 @@ impl ItemizedState for LocalItems {
         &mut self.content
     }
 
-    fn state(&self) -> &RefCell<ListState> {
+    fn state(&self) -> &RefCell<TableState> {
         &self.state
     }
 
@@ -208,7 +205,7 @@ impl ItemizedState for LocalItems {
 
 pub struct Categories {
     pub query: String,
-    pub state: RefCell<ListState>,
+    pub state: RefCell<TableState>,
     pub content: OrderMap<String, GBModCategory>,
 }
 
@@ -216,7 +213,7 @@ impl Categories {
     pub fn new() -> Self {
         Self {
             query: String::new(),
-            state: RefCell::new(ListState::default()),
+            state: RefCell::new(TableState::default()),
             content: GBModCategory::build(12914)
                 .unwrap_or_default()
                 .into_iter()
@@ -241,7 +238,7 @@ impl ItemizedState for Categories {
         &mut self.content
     }
 
-    fn state(&self) -> &RefCell<ListState> {
+    fn state(&self) -> &RefCell<TableState> {
         &self.state
     }
 

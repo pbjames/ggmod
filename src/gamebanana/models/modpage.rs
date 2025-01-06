@@ -17,11 +17,22 @@ pub struct GBModPage {
     pub name: String,
     pub description: String,
     pub row: usize,
+    #[serde(default = "uhh")]
+    pub is_nsfw: bool,
+}
+
+fn uhh() -> bool {
+    false
 }
 
 impl GBModPage {
     pub fn download_file(&self, idx: usize) -> Result<path::PathBuf> {
         self.files[idx].fetch()
+    }
+
+    pub fn set_nsfw(mut self) -> Self {
+        self.is_nsfw = true;
+        self
     }
 
     pub fn build(id: usize) -> Result<GBModPage> {

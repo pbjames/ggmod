@@ -1,7 +1,11 @@
 use std::cell::RefCell;
 
+use log::trace;
 use ordermap::ordermap;
-use ratatui::widgets::{ListItem, ListState};
+use ratatui::{
+    style::{Color, Style},
+    widgets::{Row, TableState},
+};
 use strum::{EnumIter, IntoEnumIterator};
 
 use crate::{
@@ -122,17 +126,7 @@ impl<'a> App<'a> {
         }
     }
 
-    pub fn search_items(&self) -> Vec<ListItem> {
-        match self.view.clone() {
-            View::Manage(dir) => match dir {
-                ViewDir::Left => self.staged_items.items(),
-                ViewDir::Right => self.unstaged_items.items(),
-            },
-            View::Browse => self.online_items.items(),
-        }
-    }
-
-    pub fn search_state(&self) -> &RefCell<ListState> {
+    pub fn search_state(&self) -> &RefCell<TableState> {
         match self.view.clone() {
             View::Manage(dir) => match dir {
                 ViewDir::Left => &self.staged_items.state,
@@ -153,6 +147,7 @@ impl<'a> App<'a> {
 
     pub fn select(&mut self) {
         // TODO: Redo
+        trace!("Doth been called");
         match self.view.clone() {
             View::Manage(dir) => match dir {
                 ViewDir::Left => {
@@ -193,10 +188,10 @@ impl<'a> App<'a> {
     pub fn help_text(&self) -> &str {
         match self.window.item {
             Window::Main => {
-                "\
-                H/L - Switch local/gamebanana mods\n\
-                h/l - local - Switch sides\
-                    - online - Scroll pages"
+                "Space - Install / Uninstall from game dir\n\
+                 H / L - Switch local/gamebanana mods\n\
+                 h / l - local - Switch sides\n\
+                         online - Scroll pages"
             }
             Window::Category => "j/k - scroll",
             Window::Section => "j/k - scroll",
@@ -214,5 +209,83 @@ impl<'a> App<'a> {
             View::Manage(ViewDir::Right) => self.view = View::Manage(ViewDir::Left),
             View::Browse => (),
         }
+    }
+
+    // TODO: This sux
+    pub fn unstaged_items_repr(&self) -> Vec<Row> {
+        self.unstaged_items
+            .values()
+            .iter()
+            .map(|id| {
+                let (name, char, desc, nsfw) = self.mod_id_translate(**id);
+                Row::new(vec![name, desc, char]).style(if nsfw {
+                    Style::default().bg(Color::LightRed)
+                } else {
+                    Style::default()
+                })
+            })
+            .collect()
+    }
+
+    pub fn staged_items_repr(&self) -> Vec<Row> {
+        self.staged_items
+            .values()
+            .iter()
+            .map(|id| {
+                let (name, char, desc, nsfw) = self.mod_id_translate(**id);
+                Row::new(vec![name, desc, char]).style(if nsfw {
+                    Style::default().bg(Color::LightRed)
+                } else {
+                    Style::default()
+                })
+            })
+            .collect()
+    }
+
+    pub fn online_items_repr(&self) -> Vec<Row> {
+        self.online_items
+            .values()
+            .iter()
+            .map(|ent| {
+                Row::new(vec![
+                    ent.name.clone(),
+                    ent.category.name.clone(),
+                    ent.view_count.to_string(),
+                    ent.like_count.to_string(),
+                    ent.download_count.to_string(),
+                    ent.description.clone(),
+                ])
+                .style(if ent.is_nsfw {
+                    Style::default().bg(Color::LightRed)
+                } else {
+                    Style::default()
+                })
+            })
+            .collect()
+    }
+
+    pub fn categories_repr(&self) -> Vec<Row> {
+        self.categories
+            .values()
+            .iter()
+            .map(|cat| Row::new(vec![cat.name.clone()]))
+            .collect()
+    }
+
+    pub fn mod_id_translate(&self, id: usize) -> (String, String, String, bool) {
+        self.collection
+            .mods()
+            .iter()
+            .filter(|m| m.id == id)
+            .map(|m| {
+                (
+                    m.name.clone(),
+                    m.description.clone(),
+                    m.character.clone(),
+                    m.is_nsfw,
+                )
+            })
+            .next()
+            .unwrap()
     }
 }
