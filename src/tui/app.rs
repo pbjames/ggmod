@@ -191,12 +191,11 @@ impl<'a> App<'a> {
                  h / l - local - Switch sides\n\
                          online - Scroll pages"
             }
-            Window::Category => "j/k - scroll",
-            Window::Section => "j/k - scroll",
+            Window::Category => "\nj/k - scroll",
+            Window::Section => "\nj/k - scroll",
             Window::Search => {
-                "\
-                type to search\n\
-                <arrow keys> to sort by different stuff"
+                "\ntype to search\n\
+                 <arrow keys> to sort by different stuff"
             }
         }
     }
