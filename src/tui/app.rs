@@ -39,6 +39,7 @@ pub enum Window {
 pub struct App<'a> {
     collection: &'a mut LocalCollection,
     pub view: View,
+    pub is_popup: bool,
     pub online_items: OnlineItems,
     pub staged_items: LocalItems,
     pub unstaged_items: LocalItems,
@@ -53,6 +54,7 @@ impl<'a> App<'a> {
     pub fn new(collection: &'a mut LocalCollection) -> App<'a> {
         let mut this = App {
             collection,
+            is_popup: false,
             view: View::Manage(ViewDir::Left),
             online_items: OnlineItems::new(),
             categories: Categories::new(),
@@ -74,63 +76,59 @@ impl<'a> App<'a> {
         self.unstaged_items.refresh(unstaged);
     }
 
+    pub fn local_items_mut(&mut self, dir: ViewDir) -> &mut LocalItems {
+        match dir {
+            ViewDir::Left => &mut self.staged_items,
+            ViewDir::Right => &mut self.unstaged_items,
+        }
+    }
+
+    pub fn local_items(&self, dir: ViewDir) -> &LocalItems {
+        match dir {
+            ViewDir::Left => &self.staged_items,
+            ViewDir::Right => &self.unstaged_items,
+        }
+    }
+
     // TODO: This code is straight ass, all of it
     pub fn next(&mut self) {
         match self.view.clone() {
-            View::Manage(dir) => match dir {
-                ViewDir::Left => self.staged_items.next(),
-                ViewDir::Right => self.unstaged_items.next(),
-            },
+            View::Manage(dir) => self.local_items_mut(dir).next(),
             View::Browse => self.online_items.next(),
         }
     }
 
     pub fn previous(&mut self) {
         match self.view.clone() {
-            View::Manage(dir) => match dir {
-                ViewDir::Left => self.staged_items.previous(),
-                ViewDir::Right => self.unstaged_items.previous(),
-            },
+            View::Manage(dir) => self.local_items_mut(dir).previous(),
             View::Browse => self.online_items.previous(),
         }
     }
 
     pub fn type_search(&mut self, c: char) {
         match self.view.clone() {
-            View::Manage(dir) => match dir {
-                ViewDir::Left => self.staged_items.query.push(c),
-                ViewDir::Right => self.unstaged_items.query.push(c),
-            },
+            View::Manage(dir) => self.local_items_mut(dir).query.push(c),
             View::Browse => self.online_items.query.push(c),
         }
     }
 
     pub fn backspace(&mut self) {
         match self.view.clone() {
-            View::Manage(dir) => match dir {
-                ViewDir::Left => self.staged_items.query.pop(),
-                ViewDir::Right => self.unstaged_items.query.pop(),
-            },
+            View::Manage(dir) => self.local_items_mut(dir).query.pop(),
             View::Browse => self.online_items.query.pop(),
         };
     }
 
     pub fn search_query(&self) -> String {
         match self.view.clone() {
-            View::Manage(dir) => match dir {
-                ViewDir::Left => self.staged_items.query.clone(),
-                ViewDir::Right => self.unstaged_items.query.clone(),
-            },
+            View::Manage(dir) => self.local_items(dir).query.clone(),
             View::Browse => self.online_items.query.clone(),
         }
     }
 
     pub fn search_state(&self) -> &RefCell<TableState> {
         match self.view.clone() {
-            View::Manage(dir) => match dir {
-                ViewDir::Left => &self.staged_items.state,
-                ViewDir::Right => &self.unstaged_items.state,
-            },
+            View::Manage(dir) => &self.local_items(dir).state,
             View::Browse => &self.online_items.state,
         }
     }
@@ -145,20 +143,12 @@ impl<'a> App<'a> {
     }
 
     pub fn select(&mut self) {
-        // TODO: Redo
         match self.view.clone() {
-            View::Manage(dir) => match dir {
-                ViewDir::Left => {
-                    if let Some(m) = self.staged_items.select() {
-                        self.collection.toggle(*m).unwrap();
-                    }
+            View::Manage(dir) => {
+                if let Some(m) = self.local_items(dir).select() {
+                    self.collection.toggle(*m).unwrap();
                 }
-                ViewDir::Right => {
-                    if let Some(m) = self.unstaged_items.select() {
-                        self.collection.toggle(*m).unwrap();
-                    }
-                }
-            },
+            }
             View::Browse => {
                 if let Some(entry) = self.online_items.select() {
                     self.collection
