@@ -6,8 +6,7 @@ use serde::{Deserialize, Serialize};
 use crate::gamebanana::to_human;
 
 use super::{category::GBModCategory, file::GBFile};
-
-type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
+use anyhow::Result;
 
 fn default_nsfw() -> bool {
     false

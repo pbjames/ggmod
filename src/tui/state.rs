@@ -12,7 +12,7 @@ use crate::gamebanana::{
     models::{category::GBModCategory, file::GBFile, search_result::GBSearchEntry},
 };
 
-type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
+use anyhow::Result;
 
 pub trait ItemizedState {
     type T;

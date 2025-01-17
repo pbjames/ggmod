@@ -1,10 +1,9 @@
 use std::{fs, io, path};
 
+use anyhow::Result;
 use compress_tools::{uncompress_archive, Ownership};
 use log::{debug, info, trace};
 use serde::{Deserialize, Serialize};
-
-type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 use crate::download_path;
 

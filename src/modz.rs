@@ -1,11 +1,11 @@
 use crate::{gamebanana::models::modpage::GBModPage, ggst_path, registry};
 
+use anyhow::Result;
 use log::{info, trace};
 use ordermap::OrderMap;
 use serde::{Deserialize, Serialize};
 use std::{fs, path};
 
-type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 type MutModClosure = dyn FnMut(&mut Mod) -> Result<()>;
 
 #[derive(Debug, Clone)]

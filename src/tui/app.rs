@@ -16,9 +16,9 @@ use crate::{
     modz::LocalCollection,
 };
 
-use super::state::{Categories, CyclicState, ItemizedState, LocalItems, OnlineItems, PopupItems};
+use anyhow::Result;
 
-type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
+use super::state::{Categories, CyclicState, ItemizedState, LocalItems, OnlineItems, PopupItems};
 
 #[derive(Clone)]
 pub enum ViewDir {

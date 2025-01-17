@@ -1,11 +1,13 @@
 use directories::{ProjectDirs, UserDirs};
 use log::trace;
-use std::{fs, io, path};
+use std::{
+    fs,
+    io::{self, Result},
+    path,
+};
 
 pub const SUBDIR_NAME: &str = "ggmod";
 pub const REGISTRY_FN: &str = "registry.json";
-
-type Result<T> = std::result::Result<T, io::Error>;
 
 pub fn not_found(s: &str) -> io::Error {
     io::Error::new(io::ErrorKind::NotFound, s)

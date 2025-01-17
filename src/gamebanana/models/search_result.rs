@@ -1,8 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use super::{category::GBModCategory, game::GBGame, modpage::GBModPage, preview::GBPreviewMedia};
-
-type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
+use anyhow::Result;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct GBSearchEntry {

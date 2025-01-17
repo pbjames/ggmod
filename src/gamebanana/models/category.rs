@@ -2,8 +2,7 @@ use log::info;
 use serde::{Deserialize, Serialize};
 
 use crate::gamebanana::to_human;
-
-type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
+use anyhow::Result;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct GBModCategory {

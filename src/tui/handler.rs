@@ -12,7 +12,7 @@ use super::{
     ui::show_ui,
 };
 
-type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
+use anyhow::Result;
 
 pub fn run_tui(collection: &mut LocalCollection) {
     let mut terminal = ratatui::init();

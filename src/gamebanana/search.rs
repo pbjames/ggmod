@@ -3,8 +3,7 @@ use log::{info, trace};
 use crate::gamebanana::to_human;
 
 use super::models::search_result::GBSearchEntry;
-
-type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
+use anyhow::Result;
 
 pub struct Search {
     url: String,

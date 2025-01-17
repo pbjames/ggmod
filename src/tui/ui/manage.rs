@@ -41,7 +41,7 @@ fn left_table<'a>(app: &'a App, widths: [Constraint; 3]) -> Table<'a> {
     Table::new(app.staged_items_repr(), widths)
         .widths(widths)
         .block(block)
-        .row_highlight_style(Color::Yellow)
+        .row_highlight_style(Color::Green)
 }
 
 fn right_table<'a>(app: &'a App, widths: [Constraint; 3]) -> Table<'a> {
@@ -55,5 +55,5 @@ fn right_table<'a>(app: &'a App, widths: [Constraint; 3]) -> Table<'a> {
     Table::new(app.unstaged_items_repr(), widths)
         .widths(widths)
         .block(block)
-        .row_highlight_style(Color::Yellow)
+        .row_highlight_style(Color::Green)
 }
