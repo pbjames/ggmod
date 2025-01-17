@@ -4,7 +4,7 @@ use super::{category::GBModCategory, game::GBGame, modpage::GBModPage, preview::
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct GBSearchEntry {
     pub date_updated: usize,
     pub date_added: usize,

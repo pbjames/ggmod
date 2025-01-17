@@ -22,7 +22,10 @@ use ratatui::{
 use search::search_bar;
 use section::section;
 
-use super::app::{App, View};
+use super::{
+    app::{App, View},
+    state::ItemizedState,
+};
 
 pub fn show_ui(frame: &mut Frame, app: &mut App) {
     let view_and_side = Layout::default()
@@ -43,7 +46,7 @@ pub fn show_ui(frame: &mut Frame, app: &mut App) {
         .split(view_and_side[1]);
     view_render(frame, app, view_chunks);
     side_render(frame, app, side_chunks);
-    if app.is_popup {
+    if !app.popup_items.is_empty() {
         popup(frame, app, view_and_side[0]);
     }
 }

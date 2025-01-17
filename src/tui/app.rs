@@ -1,5 +1,6 @@
 use std::cell::RefCell;
 
+use log::info;
 use ordermap::ordermap;
 use ratatui::{
     style::{Color, Style},
@@ -8,11 +9,14 @@ use ratatui::{
 use strum::{EnumIter, IntoEnumIterator};
 
 use crate::{
-    gamebanana::builder::{FeedFilter, FeedFilterIter, TypeFilter, TypeFilterIter},
+    gamebanana::{
+        builder::{FeedFilter, FeedFilterIter, TypeFilter, TypeFilterIter},
+        models::search_result::GBSearchEntry,
+    },
     modz::LocalCollection,
 };
 
-use super::state::{Categories, CyclicState, ItemizedState, LocalItems, OnlineItems};
+use super::state::{Categories, CyclicState, ItemizedState, LocalItems, OnlineItems, PopupItems};
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
@@ -39,7 +43,8 @@ pub enum Window {
 pub struct App<'a> {
     collection: &'a mut LocalCollection,
     pub view: View,
-    pub is_popup: bool,
+    // TODO: Fix dumb
+    pub popup_items: PopupItems,
     pub online_items: OnlineItems,
     pub staged_items: LocalItems,
     pub unstaged_items: LocalItems,
@@ -54,7 +59,7 @@ impl<'a> App<'a> {
     pub fn new(collection: &'a mut LocalCollection) -> App<'a> {
         let mut this = App {
             collection,
-            is_popup: false,
+            popup_items: PopupItems::empty(),
             view: View::Manage(ViewDir::Left),
             online_items: OnlineItems::new(),
             categories: Categories::new(),
@@ -67,6 +72,10 @@ impl<'a> App<'a> {
         };
         this.reregister();
         this
+    }
+
+    pub fn open_popup(&mut self, entry: GBSearchEntry) {
+        self.popup_items = PopupItems::new(entry)
     }
 
     pub fn reregister(&mut self) {
@@ -143,6 +152,16 @@ impl<'a> App<'a> {
     }
 
     pub fn select(&mut self) {
+        if !self.popup_items.is_empty() {
+            if let Some(idx) = self.popup_items.select_idx() {
+                let entry = self.popup_items.entry.clone();
+                self.collection
+                    .register_online_mod(entry.unwrap().mod_page().unwrap(), idx)
+                    .unwrap();
+                self.popup_items = PopupItems::empty();
+                return;
+            }
+        }
         match self.view.clone() {
             View::Manage(dir) => {
                 if let Some(m) = self.local_items(dir).select() {
@@ -151,9 +170,9 @@ impl<'a> App<'a> {
             }
             View::Browse => {
                 if let Some(entry) = self.online_items.select() {
-                    self.collection
-                        .register_online_mod(entry.mod_page().unwrap(), 0)
-                        .unwrap();
+                    let other = entry.clone();
+                    self.open_popup(entry.clone());
+                    info!("Popup open {:?}", other);
                 }
             }
         }
@@ -256,6 +275,20 @@ impl<'a> App<'a> {
             .values()
             .iter()
             .map(|cat| Row::new(vec![cat.name.clone()]))
+            .collect()
+    }
+
+    pub fn popup_items_repr(&self) -> Vec<Row> {
+        self.popup_items
+            .values()
+            .iter()
+            .map(|file| {
+                Row::new(vec![
+                    file.file.clone(),
+                    file.description.clone(),
+                    file.download_count.to_string(),
+                ])
+            })
             .collect()
     }
 

@@ -86,6 +86,14 @@ fn handle_event(app: &mut App) -> Result<bool> {
             KeyCode::BackTab => app.window.cycle_back(),
             _ => (),
         }
+        if !app.popup_items.is_empty() {
+            match key.code {
+                KeyCode::Char('j') => app.popup_items.next(),
+                KeyCode::Char('k') => app.popup_items.previous(),
+                KeyCode::Enter => app.select(),
+                _ => (),
+            }
+        }
     }
     Ok(false)
 }

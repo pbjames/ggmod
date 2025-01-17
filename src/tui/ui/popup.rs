@@ -1,14 +1,30 @@
 use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
-    widgets::{Block, Paragraph},
+    style::Color,
+    widgets::{Block, Borders, Clear, Row, Table},
     Frame,
 };
 
 use crate::tui::app::App;
 
-pub fn popup(frame: &Frame, app: &mut App, area: Rect) {
-    let block = Block::new();
-    let para = Paragraph::default();
+pub fn popup(frame: &mut Frame, app: &mut App, area: Rect) {
+    let header = Row::new(vec!["Name", "Description", "Downloads"]);
+    let block = Block::default()
+        .borders(Borders::ALL)
+        .title("Select a variant");
+    let widths = [
+        Constraint::Length(35),
+        Constraint::Fill(1),
+        Constraint::Length(6),
+    ];
+    let table = Table::new(app.popup_items_repr(), widths)
+        .widths(widths)
+        .block(block)
+        .header(header)
+        .row_highlight_style(Color::Yellow);
+    let rect = centered_rect(45, 45, area);
+    frame.render_widget(Clear, rect);
+    frame.render_stateful_widget(table, rect, &mut app.popup_items.state.borrow_mut());
 }
 
 fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {

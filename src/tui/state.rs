@@ -1,3 +1,4 @@
+use ordermap::ordermap;
 use std::iter::Cycle;
 
 use std::cell::RefCell;
@@ -8,7 +9,7 @@ use ratatui::widgets::TableState;
 
 use crate::gamebanana::{
     builder::{FeedFilter, SearchBuilder, SearchFilter, TypeFilter},
-    models::{category::GBModCategory, search_result::GBSearchEntry},
+    models::{category::GBModCategory, file::GBFile, search_result::GBSearchEntry},
 };
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
@@ -34,6 +35,10 @@ pub trait ItemizedState {
         self.content_mut().clear();
         self.state().borrow_mut().select(None);
         self.set_content(content);
+    }
+
+    fn is_empty(&self) -> bool {
+        self.content().is_empty()
     }
 
     fn next(&mut self) {
@@ -138,6 +143,77 @@ impl ItemizedState for OnlineItems {
                 .map(|entry| (format_entry(&entry), entry))
                 .collect(),
         );
+        Ok(())
+    }
+}
+
+pub struct PopupItems {
+    pub query: String,
+    pub state: RefCell<TableState>,
+    pub content: OrderMap<String, GBFile>,
+    pub entry: Option<GBSearchEntry>,
+}
+
+impl PopupItems {
+    pub fn empty() -> Self {
+        Self {
+            query: String::new(),
+            state: RefCell::new(TableState::default()),
+            content: ordermap!(),
+            entry: None,
+        }
+    }
+
+    pub fn new(entry: GBSearchEntry) -> Self {
+        Self {
+            query: String::new(),
+            state: RefCell::new(TableState::default()),
+            content: entry
+                .mod_page()
+                .unwrap()
+                .files
+                .into_iter()
+                .map(|f| (format!("{} | {}", f.file, f.description), f))
+                .collect(),
+            entry: Some(entry),
+        }
+    }
+
+    pub fn select_idx(&self) -> Option<usize> {
+        self.state().borrow().selected()
+    }
+}
+
+impl ItemizedState for PopupItems {
+    type T = GBFile;
+
+    fn query(&mut self) -> &mut String {
+        &mut self.query
+    }
+
+    fn content(&self) -> &OrderMap<String, Self::T> {
+        &self.content
+    }
+
+    fn content_mut(&mut self) -> &mut OrderMap<String, Self::T> {
+        &mut self.content
+    }
+
+    fn state(&self) -> &RefCell<TableState> {
+        &self.state
+    }
+
+    fn set_content(&mut self, content: OrderMap<String, Self::T>) {
+        self.content = content;
+    }
+
+    fn search(
+        &mut self,
+        _section: TypeFilter,
+        _sort: FeedFilter,
+        _category: Option<usize>,
+        _page: usize,
+    ) -> Result<()> {
         Ok(())
     }
 }

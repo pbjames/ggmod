@@ -5,7 +5,7 @@ use crate::gamebanana::to_human;
 
 type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct GBModCategory {
     pub row: usize,
     pub icon_url: String,
