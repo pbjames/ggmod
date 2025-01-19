@@ -23,6 +23,6 @@ pub struct GBSearchEntry {
 
 impl GBSearchEntry {
     pub fn mod_page(&self) -> Result<GBModPage> {
-        GBModPage::build(self.row).map(|page| page.set_nsfw())
+        GBModPage::build(self.row).map(|page| if self.is_nsfw { page.set_nsfw() } else { page })
     }
 }
