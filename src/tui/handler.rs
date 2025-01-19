@@ -1,3 +1,4 @@
+use ordermap::ordermap;
 use ratatui::{
     crossterm::event::{self, Event, KeyCode},
     prelude::Backend,
@@ -36,6 +37,17 @@ fn run<B: Backend>(terminal: &mut Terminal<B>, collection: &mut LocalCollection)
 fn handle_event(app: &mut App) -> Result<bool> {
     if let Event::Key(key) = event::read()? {
         if key.kind == event::KeyEventKind::Release {
+            return Ok(false);
+        }
+        if !app.popup_items.is_empty() {
+            match key.code {
+                KeyCode::Char('j') => app.popup_items.next(),
+                KeyCode::Char('k') => app.popup_items.previous(),
+                KeyCode::Char('q') => app.popup_items.refresh(ordermap!()),
+                KeyCode::Esc => app.popup_items.refresh(ordermap!()),
+                KeyCode::Enter => app.select(),
+                _ => (),
+            }
             return Ok(false);
         }
         match &app.window.item {
@@ -85,14 +97,6 @@ fn handle_event(app: &mut App) -> Result<bool> {
             KeyCode::Tab => app.window.cycle(),
             KeyCode::BackTab => app.window.cycle_back(),
             _ => (),
-        }
-        if !app.popup_items.is_empty() {
-            match key.code {
-                KeyCode::Char('j') => app.popup_items.next(),
-                KeyCode::Char('k') => app.popup_items.previous(),
-                KeyCode::Enter => app.select(),
-                _ => (),
-            }
         }
     }
     Ok(false)

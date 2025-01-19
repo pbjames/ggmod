@@ -285,8 +285,8 @@ impl<'a> App<'a> {
             .map(|file| {
                 Row::new(vec![
                     file.file.clone(),
-                    file.description.clone(),
                     file.download_count.to_string(),
+                    file.description.clone(),
                 ])
             })
             .collect()

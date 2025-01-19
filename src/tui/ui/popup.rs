@@ -8,21 +8,21 @@ use ratatui::{
 use crate::tui::app::App;
 
 pub fn popup(frame: &mut Frame, app: &mut App, area: Rect) {
-    let header = Row::new(vec!["Name", "Description", "Downloads"]);
+    let header = Row::new(vec!["Name", "Downloads", "Description"]);
     let block = Block::default()
         .borders(Borders::ALL)
         .title("Select a variant");
     let widths = [
         Constraint::Length(35),
+        Constraint::Length(9),
         Constraint::Fill(1),
-        Constraint::Length(6),
     ];
     let table = Table::new(app.popup_items_repr(), widths)
         .widths(widths)
         .block(block)
         .header(header)
         .row_highlight_style(Color::Yellow);
-    let rect = centered_rect(45, 45, area);
+    let rect = centered_rect(55, 45, area);
     frame.render_widget(Clear, rect);
     frame.render_stateful_widget(table, rect, &mut app.popup_items.state.borrow_mut());
 }
