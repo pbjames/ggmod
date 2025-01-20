@@ -16,6 +16,7 @@ use crate::{
 use anyhow::Result;
 
 pub trait ItemizedState {
+    // TODO: Needs optimization since we keep converting and cloning rows
     type T: for<'a> Into<Row<'a>>;
 
     fn query(&mut self) -> &mut String;

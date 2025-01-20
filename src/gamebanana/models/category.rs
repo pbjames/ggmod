@@ -14,7 +14,6 @@ pub struct GBModCategory {
 }
 
 impl GBModCategory {
-    // TODO: Add to UI and responsive
     pub fn build(id: usize) -> Result<Vec<GBModCategory>> {
         let resp = reqwest::blocking::get(Self::url(id))?.text()?;
         let conv = to_human(&resp)?;

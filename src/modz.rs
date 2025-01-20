@@ -43,10 +43,6 @@ impl LocalCollection {
         Some(serde_json::from_reader(file).unwrap())
     }
 
-    pub fn contains(&self, id: usize) -> Option<&Mod> {
-        self.mods.iter().find(|m| m.id == id)
-    }
-
     pub fn register_online_mod(&mut self, gbmod: GBModPage, idx: usize) -> Result<()> {
         let new_mod = Mod::build(gbmod, idx)?;
         self.mods.push(new_mod);

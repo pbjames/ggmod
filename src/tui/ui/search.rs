@@ -32,6 +32,8 @@ fn sorts_attachment_widget<'a>(app: &App) -> Paragraph<'a> {
         app,
         Window::Search,
     );
-    let spans = enum_to_span(app.sort.item.clone(), Box::new(|f| format!(" {:?} ", f)));
+    let spans = enum_to_span(app.sort.item.clone())
+        .into_iter()
+        .map(|s| s.clone().content(format!(" {}", s.content)));
     Paragraph::new(Line::from_iter(spans).centered()).block(block)
 }

@@ -23,13 +23,13 @@ pub fn hide_unfocused<'a>(widget: Block<'a>, app: &App, window: Window) -> Block
 }
 
 // INFO: I like this one
-pub fn enum_to_span<'a, T>(app_value: T, repr: Box<dyn Fn(T) -> String>) -> Vec<Span<'a>>
+pub fn enum_to_span<'a, T>(app_value: T) -> Vec<Span<'a>>
 where
     T: PartialEq + Debug + IntoEnumIterator + Clone,
 {
     T::iter()
         .map(|t| {
-            Span::from(repr(t.clone())).style(Style::default().fg(if app_value == t {
+            Span::from(format!("{t:?}")).style(Style::default().fg(if app_value == t {
                 Color::LightBlue
             } else {
                 Color::Gray

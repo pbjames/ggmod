@@ -162,6 +162,7 @@ impl<'a> App<'a> {
                     .register_online_mod(entry.unwrap().mod_page().unwrap(), idx)
                     .unwrap();
                 self.popup_items.clear();
+                self.reregister();
                 return;
             }
         }
