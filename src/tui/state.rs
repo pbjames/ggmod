@@ -1,27 +1,28 @@
-use ordermap::ordermap;
 use std::iter::Cycle;
 
 use std::cell::RefCell;
 
 use log::trace;
-use ordermap::OrderMap;
-use ratatui::widgets::TableState;
+use ratatui::widgets::{Row, TableState};
 
-use crate::gamebanana::{
-    builder::{FeedFilter, SearchBuilder, SearchFilter, TypeFilter},
-    models::{category::GBModCategory, file::GBFile, search_result::GBSearchEntry},
+use crate::{
+    gamebanana::{
+        builder::{FeedFilter, SearchBuilder, SearchFilter, TypeFilter},
+        models::{category::GBModCategory, file::GBFile, search_result::GBSearchEntry},
+    },
+    modz::Mod,
 };
 
 use anyhow::Result;
 
 pub trait ItemizedState {
-    type T;
+    type T: for<'a> Into<Row<'a>>;
 
     fn query(&mut self) -> &mut String;
-    fn content(&self) -> &OrderMap<String, Self::T>;
-    fn content_mut(&mut self) -> &mut OrderMap<String, Self::T>;
+    fn content(&self) -> &Vec<Self::T>;
+    fn content_mut(&mut self) -> &mut Vec<Self::T>;
     fn state(&self) -> &RefCell<TableState>;
-    fn set_content(&mut self, content: OrderMap<String, Self::T>);
+    fn set_content(&mut self, content: Vec<Self::T>);
     fn search(
         &mut self,
         section: TypeFilter,
@@ -30,11 +31,17 @@ pub trait ItemizedState {
         page: usize,
     ) -> Result<()>;
 
-    fn refresh(&mut self, content: OrderMap<String, Self::T>) {
+    fn refresh(&mut self, content: Vec<Self::T>) {
         self.query().clear();
         self.content_mut().clear();
-        self.state().borrow_mut().select(None);
+        self.state()
+            .borrow_mut()
+            .select(if !content.is_empty() { Some(0) } else { None });
         self.set_content(content);
+    }
+
+    fn clear(&mut self) {
+        self.refresh(Vec::new())
     }
 
     fn is_empty(&self) -> bool {
@@ -62,16 +69,12 @@ pub trait ItemizedState {
         let state = self.state().borrow();
         state.selected().map(|x| &self.content()[x])
     }
-
-    fn values(&self) -> Vec<&Self::T> {
-        self.content().values().collect()
-    }
 }
 
 pub struct OnlineItems {
     pub query: String,
     pub state: RefCell<TableState>,
-    pub content: OrderMap<String, GBSearchEntry>,
+    pub content: Vec<GBSearchEntry>,
 }
 
 impl OnlineItems {
@@ -79,7 +82,7 @@ impl OnlineItems {
         Self {
             query: String::new(),
             state: RefCell::new(TableState::default()),
-            content: OrderMap::new(),
+            content: Vec::new(),
         }
     }
 }
@@ -91,11 +94,11 @@ impl ItemizedState for OnlineItems {
         &mut self.query
     }
 
-    fn content(&self) -> &OrderMap<String, Self::T> {
+    fn content(&self) -> &Vec<Self::T> {
         &self.content
     }
 
-    fn content_mut(&mut self) -> &mut OrderMap<String, Self::T> {
+    fn content_mut(&mut self) -> &mut Vec<Self::T> {
         &mut self.content
     }
 
@@ -103,7 +106,7 @@ impl ItemizedState for OnlineItems {
         &self.state
     }
 
-    fn set_content(&mut self, content: OrderMap<String, Self::T>) {
+    fn set_content(&mut self, content: Vec<Self::T>) {
         self.content = content;
     }
 
@@ -114,9 +117,6 @@ impl ItemizedState for OnlineItems {
         category: Option<usize>,
         page: usize,
     ) -> Result<()> {
-        fn format_entry(entry: &GBSearchEntry) -> String {
-            format!("{:<50}: views {}", entry.name, entry.view_count)
-        }
         let search_type = match category {
             Some(cat_id) if cat_id != 0 => SearchFilter::Category { cat_id },
             Some(_) | None => {
@@ -137,12 +137,7 @@ impl ItemizedState for OnlineItems {
             .of_category(category.filter(|id| *id != 0));
         trace!("Are we searching categorically: {category:?}");
         let results = search.build().read_page(page)?;
-        self.refresh(
-            results
-                .into_iter()
-                .map(|entry| (format_entry(&entry), entry))
-                .collect(),
-        );
+        self.refresh(results);
         Ok(())
     }
 }
@@ -150,7 +145,7 @@ impl ItemizedState for OnlineItems {
 pub struct PopupItems {
     pub query: String,
     pub state: RefCell<TableState>,
-    pub content: OrderMap<String, GBFile>,
+    pub content: Vec<GBFile>,
     pub entry: Option<GBSearchEntry>,
 }
 
@@ -159,7 +154,7 @@ impl PopupItems {
         Self {
             query: String::new(),
             state: RefCell::new(TableState::default()),
-            content: ordermap!(),
+            content: Vec::new(),
             entry: None,
         }
     }
@@ -168,13 +163,7 @@ impl PopupItems {
         Self {
             query: String::new(),
             state: RefCell::new(TableState::default()),
-            content: entry
-                .mod_page()
-                .unwrap()
-                .files
-                .into_iter()
-                .map(|f| (format!("{} | {}", f.file, f.description), f))
-                .collect(),
+            content: entry.mod_page().unwrap().files,
             entry: Some(entry),
         }
     }
@@ -191,11 +180,11 @@ impl ItemizedState for PopupItems {
         &mut self.query
     }
 
-    fn content(&self) -> &OrderMap<String, Self::T> {
+    fn content(&self) -> &Vec<Self::T> {
         &self.content
     }
 
-    fn content_mut(&mut self) -> &mut OrderMap<String, Self::T> {
+    fn content_mut(&mut self) -> &mut Vec<Self::T> {
         &mut self.content
     }
 
@@ -203,7 +192,7 @@ impl ItemizedState for PopupItems {
         &self.state
     }
 
-    fn set_content(&mut self, content: OrderMap<String, Self::T>) {
+    fn set_content(&mut self, content: Vec<Self::T>) {
         self.content = content;
     }
 
@@ -221,11 +210,11 @@ impl ItemizedState for PopupItems {
 pub struct LocalItems {
     pub query: String,
     pub state: RefCell<TableState>,
-    pub content: OrderMap<String, usize>,
+    pub content: Vec<Mod>,
 }
 
 impl LocalItems {
-    pub fn new(content: OrderMap<String, usize>) -> Self {
+    pub fn new(content: Vec<Mod>) -> Self {
         Self {
             query: String::new(),
             state: RefCell::new(TableState::default()),
@@ -235,17 +224,17 @@ impl LocalItems {
 }
 
 impl ItemizedState for LocalItems {
-    type T = usize;
+    type T = Mod;
 
     fn query(&mut self) -> &mut String {
         &mut self.query
     }
 
-    fn content(&self) -> &OrderMap<String, Self::T> {
+    fn content(&self) -> &Vec<Self::T> {
         &self.content
     }
 
-    fn content_mut(&mut self) -> &mut OrderMap<String, Self::T> {
+    fn content_mut(&mut self) -> &mut Vec<Self::T> {
         &mut self.content
     }
 
@@ -253,7 +242,7 @@ impl ItemizedState for LocalItems {
         &self.state
     }
 
-    fn set_content(&mut self, content: OrderMap<String, Self::T>) {
+    fn set_content(&mut self, content: Vec<Self::T>) {
         self.content = content;
     }
 
@@ -271,21 +260,19 @@ impl ItemizedState for LocalItems {
 pub struct Categories {
     pub query: String,
     pub state: RefCell<TableState>,
-    pub content: OrderMap<String, GBModCategory>,
+    pub content: Vec<GBModCategory>,
 }
 
 impl Categories {
     pub fn new() -> Self {
-        Self {
+        let this = Self {
             query: String::new(),
             state: RefCell::new(TableState::default()),
             // TODO: Find out where this magic number come from
-            content: GBModCategory::build(12914)
-                .unwrap_or_default()
-                .into_iter()
-                .map(|cat: GBModCategory| (cat.name.clone(), cat))
-                .collect(),
-        }
+            content: GBModCategory::build(12914).unwrap_or_default(),
+        };
+        this.state().borrow_mut().select(Some(0));
+        this
     }
 }
 
@@ -296,11 +283,11 @@ impl ItemizedState for Categories {
         &mut self.query
     }
 
-    fn content(&self) -> &OrderMap<String, Self::T> {
+    fn content(&self) -> &Vec<Self::T> {
         &self.content
     }
 
-    fn content_mut(&mut self) -> &mut OrderMap<String, Self::T> {
+    fn content_mut(&mut self) -> &mut Vec<Self::T> {
         &mut self.content
     }
 
@@ -308,7 +295,7 @@ impl ItemizedState for Categories {
         &self.state
     }
 
-    fn set_content(&mut self, content: OrderMap<String, Self::T>) {
+    fn set_content(&mut self, content: Vec<Self::T>) {
         self.content = content;
     }
 

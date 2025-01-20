@@ -1,6 +1,6 @@
 [package]
 name = "ggmod"
-version = "1.9.2"
+version = "2.0.0"
 edition = "2021"
 
 [dependencies]
@@ -8,9 +8,8 @@ anyhow = "1.0.95"
 clap = { version = "4.5.23", features = ["derive"] }
 compress-tools = { version = "0.15.1", features = ["blocking"] }
 dircpy = "0.3.19"
-directories = "5.0.1"
+directories = "6.0.0"
 log = "0.4.22"
-ordermap = "0.5.4"
 ratatui = "0.29.0"
 regex = "1.11.1"
 reqwest = { version = "0.12.9", features = ["blocking"] }

@@ -1,4 +1,5 @@
 use log::info;
+use ratatui::widgets::Row;
 use serde::{Deserialize, Serialize};
 
 use crate::gamebanana::to_human;
@@ -32,5 +33,11 @@ impl GBModCategory {
 
     fn url(id: usize) -> String {
         format!("https://gamebanana.com/apiv11/Mod/Categories?_idCategoryRow={id}&_sSort=a_to_z")
+    }
+}
+
+impl From<GBModCategory> for Row<'_> {
+    fn from(value: GBModCategory) -> Self {
+        Row::new(vec![value.name])
     }
 }

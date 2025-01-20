@@ -22,6 +22,7 @@ pub fn hide_unfocused<'a>(widget: Block<'a>, app: &App, window: Window) -> Block
     )
 }
 
+// INFO: I like this one
 pub fn enum_to_span<'a, T>(app_value: T, repr: Box<dyn Fn(T) -> String>) -> Vec<Span<'a>>
 where
     T: PartialEq + Debug + IntoEnumIterator + Clone,

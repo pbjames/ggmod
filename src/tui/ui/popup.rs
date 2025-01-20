@@ -17,7 +17,7 @@ pub fn popup(frame: &mut Frame, app: &mut App, area: Rect) {
         Constraint::Length(9),
         Constraint::Fill(1),
     ];
-    let table = Table::new(app.popup_items_repr(), widths)
+    let table = Table::new(app.popup_items.content.clone(), widths)
         .widths(widths)
         .block(block)
         .header(header)

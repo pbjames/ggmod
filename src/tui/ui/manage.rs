@@ -38,7 +38,7 @@ fn left_table<'a>(app: &'a App, widths: [Constraint; 3]) -> Table<'a> {
             View::Manage(ViewDir::Left) if app.window.item == Window::Main => Color::White,
             _ => Color::DarkGray,
         }));
-    Table::new(app.staged_items_repr(), widths)
+    Table::new(app.staged_items.content.clone(), widths)
         .widths(widths)
         .block(block)
         .row_highlight_style(Color::Green)
@@ -52,7 +52,7 @@ fn right_table<'a>(app: &'a App, widths: [Constraint; 3]) -> Table<'a> {
             View::Manage(ViewDir::Right) if app.window.item == Window::Main => Color::White,
             _ => Color::DarkGray,
         }));
-    Table::new(app.unstaged_items_repr(), widths)
+    Table::new(app.unstaged_items.content.clone(), widths)
         .widths(widths)
         .block(block)
         .row_highlight_style(Color::Green)

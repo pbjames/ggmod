@@ -1,3 +1,7 @@
+use ratatui::{
+    style::{Color, Stylize},
+    widgets::Row,
+};
 use serde::{Deserialize, Serialize};
 
 use super::{category::GBModCategory, game::GBGame, modpage::GBModPage, preview::GBPreviewMedia};
@@ -24,5 +28,23 @@ pub struct GBSearchEntry {
 impl GBSearchEntry {
     pub fn mod_page(&self) -> Result<GBModPage> {
         GBModPage::build(self.row).map(|page| if self.is_nsfw { page.set_nsfw() } else { page })
+    }
+}
+
+impl From<GBSearchEntry> for Row<'_> {
+    fn from(value: GBSearchEntry) -> Self {
+        let row = Row::new(vec![
+            value.name,
+            value.category.name,
+            value.view_count.to_string(),
+            value.like_count.to_string(),
+            value.download_count.to_string(),
+            value.description,
+        ]);
+        if value.is_nsfw {
+            row.bg(Color::LightRed)
+        } else {
+            row
+        }
     }
 }

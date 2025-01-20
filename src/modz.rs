@@ -2,7 +2,10 @@ use crate::{gamebanana::models::modpage::GBModPage, ggst_path, registry};
 
 use anyhow::Result;
 use log::{info, trace};
-use ordermap::OrderMap;
+use ratatui::{
+    style::{Color, Stylize},
+    widgets::Row,
+};
 use serde::{Deserialize, Serialize};
 use std::{fs, path};
 
@@ -59,28 +62,15 @@ impl LocalCollection {
         Ok(())
     }
 
-    pub fn unstaged_mods(&self) -> OrderMap<String, usize> {
-        trace!("Looking for unstaged mods, {:?}", self.mods);
-        self.mods()
-            .iter()
-            .filter(|m| !m.staged)
-            .map(|m| (m.name.clone(), m.id))
-            .collect()
-    }
-
-    pub fn staged_mods(&self) -> OrderMap<String, usize> {
-        self.mods()
-            .iter()
-            .filter(|m| m.staged)
-            .map(|m| (m.name.clone(), m.id))
-            .collect()
-    }
-
     pub fn toggle(&mut self, id: usize) -> Result<()> {
         self.apply_on_mod(
             id,
             Box::new(|m: &mut Mod| if m.staged { m.unstage() } else { m.stage() }),
         )
+    }
+
+    pub fn filter_and_copy_by(&self, fun: Box<dyn FnMut(&&Mod) -> bool>) -> Vec<Mod> {
+        self.mods().iter().filter(fun).cloned().collect()
     }
 
     fn write_mods(&self) -> Option<()> {
@@ -140,5 +130,20 @@ impl Mod {
         fs::remove_dir_all(ggst_path().unwrap_or_default().join(self.id.to_string()))?;
         self.staged = false;
         Ok(())
+    }
+}
+
+impl<'a> From<Mod> for Row<'a> {
+    fn from(value: Mod) -> Self {
+        let row = Row::new(vec![
+            value.name.clone(),
+            value.character.clone(),
+            value.description.clone(),
+        ]);
+        if value.is_nsfw {
+            row.bg(Color::LightRed)
+        } else {
+            row
+        }
     }
 }

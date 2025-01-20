@@ -3,11 +3,12 @@ use std::{fs, io, path};
 use anyhow::Result;
 use compress_tools::{uncompress_archive, Ownership};
 use log::{debug, info, trace};
+use ratatui::widgets::Row;
 use serde::{Deserialize, Serialize};
 
 use crate::download_path;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct GBFile {
     pub contains_exe: bool,
     pub download_count: usize,
@@ -42,5 +43,15 @@ impl GBFile {
             debug!("{}", format!("Archive {file:?} decompressed to {dir:?}"));
             Ok(dir)
         }
+    }
+}
+
+impl From<GBFile> for Row<'_> {
+    fn from(value: GBFile) -> Self {
+        Row::new(vec![
+            value.file,
+            value.download_count.to_string(),
+            value.description,
+        ])
     }
 }

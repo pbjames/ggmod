@@ -15,8 +15,7 @@ pub fn category(frame: &mut Frame, app: &mut App, area: Rect) {
         app,
         Window::Category,
     );
-    let iter = app.categories_repr();
-    let text = Table::new(iter, [Constraint::Fill(1)])
+    let text = Table::new(app.categories.content.clone(), [Constraint::Fill(1)])
         .widths([Constraint::Fill(1)])
         .block(block)
         .row_highlight_style(Style::default().fg(Color::Blue));

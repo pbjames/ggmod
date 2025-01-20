@@ -31,7 +31,9 @@ pub fn browse_view(frame: &mut Frame, app: &mut App, area: Rect) {
         "Downloads",
         "Description",
     ]);
-    let text = Table::new(app.online_items_repr(), widths)
+    // INFO: Note that we clone since it's almost equivalent to cloning each string
+    // inside each struct
+    let text = Table::new(app.online_items.content.clone(), widths)
         .header(header)
         .widths(widths)
         .block(block)
