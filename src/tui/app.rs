@@ -36,6 +36,8 @@ pub enum Window {
     Section,
 }
 
+/// Basically a container that holds state from state.rs and acts differently based on
+/// current state beind held
 pub struct App<'a> {
     collection: &'a mut LocalCollection,
     pub popup_items: PopupItems,
@@ -94,7 +96,7 @@ impl<'a> App<'a> {
         }
     }
 
-    // TODO: Apparently a necessary evil, even though it's shit it's also quite simple
+    // INFO: Apparently a necessary evil, even though it's shit it's also quite simple
     pub fn next(&mut self) {
         match self.view {
             View::Manage(dir) => self.local_items_mut(dir).next(),
@@ -212,5 +214,11 @@ impl<'a> App<'a> {
             }
         }
     }
-    // TODO: Search bar listens to 1 2 3 4 when empty + toasts
+    // TODO: Toasts
+    // + Perf. optimsation
+    // + Fix sometimes sees mod files as directories and crash
+    // + Sorting tables
+    // + Fix sfw searching + images
+    // + Mod deletion and modification
+    // + Replace builder with derive_builder macro (long)
 }
