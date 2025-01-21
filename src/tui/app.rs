@@ -216,7 +216,6 @@ impl<'a> App<'a> {
     }
     // TODO: Toasts
     // + Perf. optimsation
-    // + Fix sometimes sees mod files as directories and crash
     // + Sorting tables
     // + Fix sfw searching + images
     // + Mod deletion and modification

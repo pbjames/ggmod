@@ -5,6 +5,7 @@ use compress_tools::{uncompress_archive, Ownership};
 use log::{debug, info, trace};
 use ratatui::widgets::Row;
 use serde::{Deserialize, Serialize};
+use unrar::Archive;
 
 use crate::download_path;
 
@@ -21,7 +22,7 @@ pub struct GBFile {
 }
 
 impl GBFile {
-    pub fn download_to<'a>(&self, path: &'a path::PathBuf) -> Result<&'a path::PathBuf> {
+    fn download_to<'a>(&self, path: &'a path::PathBuf) -> Result<&'a path::PathBuf> {
         info!("Downloading new archive..");
         let response = reqwest::blocking::get(&self.download_url)?;
         let mut file = fs::File::create(path)?;
@@ -39,8 +40,21 @@ impl GBFile {
         } else {
             self.download_to(&file)?;
             let src = fs::File::open(&file)?;
-            uncompress_archive(src, &dir, Ownership::Preserve)?;
-            debug!("{}", format!("Archive {file:?} decompressed to {dir:?}"));
+            debug!("Archive {file:?} attempting decompress to {dir:?}");
+            if let Some(ext) = file.extension() {
+                if ext == "rar" {
+                    let mut archive = Archive::new(&file).open_for_processing()?;
+                    while let Some(header) = archive.read_header()? {
+                        archive = if header.entry().is_file() {
+                            header.extract_to(dir.clone())?
+                        } else {
+                            header.skip()?
+                        };
+                    }
+                } else {
+                    uncompress_archive(src, &dir, Ownership::Preserve)?;
+                }
+            }
             Ok(dir)
         }
     }
