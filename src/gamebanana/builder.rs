@@ -134,7 +134,7 @@ impl<'a> SearchBuilder<'a> {
     }
 }
 
-impl<'a> Default for SearchBuilder<'a> {
+impl Default for SearchBuilder<'_> {
     fn default() -> Self {
         Self::new()
     }

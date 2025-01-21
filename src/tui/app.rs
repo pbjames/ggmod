@@ -1,7 +1,8 @@
-use std::cell::RefCell;
+use std::{cell::RefCell, collections::HashMap, path::PathBuf};
 
 use log::info;
 use ratatui::widgets::TableState;
+use ratatui_image::protocol::StatefulProtocol;
 use strum::{EnumIter, IntoEnumIterator};
 
 use crate::{
@@ -50,6 +51,7 @@ pub struct App<'a> {
     pub window: CyclicState<WindowIter, Window>,
     pub sort: CyclicState<FeedFilterIter, FeedFilter>,
     pub page: usize,
+    pub image_states: HashMap<PathBuf, RefCell<StatefulProtocol>>,
 }
 
 impl<'a> App<'a> {
@@ -66,6 +68,7 @@ impl<'a> App<'a> {
             window: CyclicState::new(Window::iter(), Window::Search),
             sort: CyclicState::new(FeedFilter::iter(), FeedFilter::Recent),
             page: 0,
+            image_states: HashMap::new(),
         };
         this.reregister();
         this

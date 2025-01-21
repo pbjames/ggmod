@@ -37,3 +37,8 @@ where
         })
         .collect()
 }
+
+pub fn image_support() -> bool {
+    // TODO: Fix extreme lag and finish this
+    false
+}

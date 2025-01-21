@@ -129,7 +129,7 @@ impl Mod {
     }
 }
 
-impl<'a> From<Mod> for Row<'a> {
+impl From<Mod> for Row<'_> {
     fn from(value: Mod) -> Self {
         let row = Row::new(vec![
             value.name.clone(),
