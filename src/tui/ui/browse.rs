@@ -10,7 +10,7 @@ use ratatui_image::{picker::Picker, StatefulImage};
 
 use crate::tui::{
     app::{App, Window},
-    state::ItemizedState,
+    state::Itemized,
 };
 
 use anyhow::Result;

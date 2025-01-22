@@ -9,7 +9,7 @@ use strum::IntoEnumIterator;
 
 use crate::tui::{
     app::{App, Window},
-    state::ItemizedState,
+    state::Itemized,
 };
 
 pub fn hide_unfocused<'a>(widget: Block<'a>, app: &App, window: Window) -> Block<'a> {

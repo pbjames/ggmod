@@ -24,7 +24,7 @@ use section::section;
 
 use super::{
     app::{App, View},
-    state::ItemizedState,
+    state::Itemized,
 };
 
 pub fn show_ui(frame: &mut Frame, app: &mut App) {

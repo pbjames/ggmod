@@ -15,30 +15,20 @@ use crate::{
 
 use anyhow::Result;
 
-pub trait ItemizedState {
+pub trait Itemized {
     // TODO: Needs optimization since we keep converting and cloning rows
     type T: for<'a> Into<Row<'a>>;
 
-    fn query(&mut self) -> &mut String;
     fn content(&self) -> &Vec<Self::T>;
     fn content_mut(&mut self) -> &mut Vec<Self::T>;
     fn state(&self) -> &RefCell<TableState>;
-    fn set_content(&mut self, content: Vec<Self::T>);
-    fn search(
-        &mut self,
-        section: TypeFilter,
-        sort: FeedFilter,
-        category: Option<usize>,
-        page: usize,
-    ) -> Result<()>;
 
     fn refresh(&mut self, content: Vec<Self::T>) {
-        self.query().clear();
         self.content_mut().clear();
         self.state()
             .borrow_mut()
             .select(if !content.is_empty() { Some(0) } else { None });
-        self.set_content(content);
+        content.into_iter().for_each(|v| self.content_mut().push(v));
     }
 
     fn clear(&mut self) {
@@ -72,6 +62,7 @@ pub trait ItemizedState {
     }
 }
 
+#[derive(Default)]
 pub struct OnlineItems {
     pub query: String,
     pub state: RefCell<TableState>,
@@ -79,39 +70,7 @@ pub struct OnlineItems {
 }
 
 impl OnlineItems {
-    pub fn new() -> Self {
-        Self {
-            query: String::new(),
-            state: RefCell::new(TableState::default()),
-            content: Vec::new(),
-        }
-    }
-}
-
-impl ItemizedState for OnlineItems {
-    type T = GBSearchEntry;
-
-    fn query(&mut self) -> &mut String {
-        &mut self.query
-    }
-
-    fn content(&self) -> &Vec<Self::T> {
-        &self.content
-    }
-
-    fn content_mut(&mut self) -> &mut Vec<Self::T> {
-        &mut self.content
-    }
-
-    fn state(&self) -> &RefCell<TableState> {
-        &self.state
-    }
-
-    fn set_content(&mut self, content: Vec<Self::T>) {
-        self.content = content;
-    }
-
-    fn search(
+    pub fn search(
         &mut self,
         section: TypeFilter,
         sort: FeedFilter,
@@ -139,47 +98,13 @@ impl ItemizedState for OnlineItems {
         trace!("Are we searching categorically: {category:?}");
         let results = search.build().read_page(page)?;
         self.refresh(results);
+        self.query.clear();
         Ok(())
     }
 }
 
-pub struct PopupItems {
-    pub query: String,
-    pub state: RefCell<TableState>,
-    pub content: Vec<GBFile>,
-    pub entry: Option<GBSearchEntry>,
-}
-
-impl PopupItems {
-    pub fn empty() -> Self {
-        Self {
-            query: String::new(),
-            state: RefCell::new(TableState::default()),
-            content: Vec::new(),
-            entry: None,
-        }
-    }
-
-    pub fn new(entry: GBSearchEntry) -> Self {
-        Self {
-            query: String::new(),
-            state: RefCell::new(TableState::default()),
-            content: entry.mod_page().unwrap().files,
-            entry: Some(entry),
-        }
-    }
-
-    pub fn select_idx(&self) -> Option<usize> {
-        self.state().borrow().selected()
-    }
-}
-
-impl ItemizedState for PopupItems {
-    type T = GBFile;
-
-    fn query(&mut self) -> &mut String {
-        &mut self.query
-    }
+impl Itemized for OnlineItems {
+    type T = GBSearchEntry;
 
     fn content(&self) -> &Vec<Self::T> {
         &self.content
@@ -192,19 +117,42 @@ impl ItemizedState for PopupItems {
     fn state(&self) -> &RefCell<TableState> {
         &self.state
     }
+}
 
-    fn set_content(&mut self, content: Vec<Self::T>) {
-        self.content = content;
+#[derive(Default)]
+pub struct PopupItems {
+    pub state: RefCell<TableState>,
+    pub content: Vec<GBFile>,
+    pub entry: Option<GBSearchEntry>,
+}
+
+impl PopupItems {
+    pub fn new(entry: GBSearchEntry) -> Self {
+        Self {
+            state: RefCell::new(TableState::default()),
+            content: entry.mod_page().unwrap().files,
+            entry: Some(entry),
+        }
     }
 
-    fn search(
-        &mut self,
-        _section: TypeFilter,
-        _sort: FeedFilter,
-        _category: Option<usize>,
-        _page: usize,
-    ) -> Result<()> {
-        Ok(())
+    pub fn select_idx(&self) -> Option<usize> {
+        self.state().borrow().selected()
+    }
+}
+
+impl Itemized for PopupItems {
+    type T = GBFile;
+
+    fn content(&self) -> &Vec<Self::T> {
+        &self.content
+    }
+
+    fn content_mut(&mut self) -> &mut Vec<Self::T> {
+        &mut self.content
+    }
+
+    fn state(&self) -> &RefCell<TableState> {
+        &self.state
     }
 }
 
@@ -224,12 +172,8 @@ impl LocalItems {
     }
 }
 
-impl ItemizedState for LocalItems {
+impl Itemized for LocalItems {
     type T = Mod;
-
-    fn query(&mut self) -> &mut String {
-        &mut self.query
-    }
 
     fn content(&self) -> &Vec<Self::T> {
         &self.content
@@ -242,24 +186,9 @@ impl ItemizedState for LocalItems {
     fn state(&self) -> &RefCell<TableState> {
         &self.state
     }
-
-    fn set_content(&mut self, content: Vec<Self::T>) {
-        self.content = content;
-    }
-
-    fn search(
-        &mut self,
-        _section: TypeFilter,
-        _sort: FeedFilter,
-        _category: Option<usize>,
-        _page: usize,
-    ) -> Result<()> {
-        Ok(())
-    }
 }
 
 pub struct Categories {
-    pub query: String,
     pub state: RefCell<TableState>,
     pub content: Vec<GBModCategory>,
 }
@@ -267,7 +196,6 @@ pub struct Categories {
 impl Categories {
     pub fn new() -> Self {
         let this = Self {
-            query: String::new(),
             state: RefCell::new(TableState::default()),
             // TODO: Find out where this magic number come from
             content: GBModCategory::build(12914).unwrap_or_default(),
@@ -277,12 +205,8 @@ impl Categories {
     }
 }
 
-impl ItemizedState for Categories {
+impl Itemized for Categories {
     type T = GBModCategory;
-
-    fn query(&mut self) -> &mut String {
-        &mut self.query
-    }
 
     fn content(&self) -> &Vec<Self::T> {
         &self.content
@@ -294,20 +218,6 @@ impl ItemizedState for Categories {
 
     fn state(&self) -> &RefCell<TableState> {
         &self.state
-    }
-
-    fn set_content(&mut self, content: Vec<Self::T>) {
-        self.content = content;
-    }
-
-    fn search(
-        &mut self,
-        _section: TypeFilter,
-        _sort: FeedFilter,
-        _category: Option<usize>,
-        _page: usize,
-    ) -> Result<()> {
-        Ok(())
     }
 }
 

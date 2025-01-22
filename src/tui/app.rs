@@ -15,7 +15,7 @@ use crate::{
 
 use anyhow::Result;
 
-use super::state::{Categories, CyclicState, ItemizedState, LocalItems, OnlineItems, PopupItems};
+use super::state::{Categories, CyclicState, Itemized, LocalItems, OnlineItems, PopupItems};
 
 #[derive(Copy, Clone)]
 pub enum ViewDir {
@@ -58,8 +58,8 @@ impl<'a> App<'a> {
     pub fn new(collection: &'a mut LocalCollection) -> App<'a> {
         let mut this = App {
             collection,
-            popup_items: PopupItems::empty(),
-            online_items: OnlineItems::new(),
+            popup_items: PopupItems::default(),
+            online_items: OnlineItems::default(),
             staged_items: LocalItems::new(Vec::new()),
             unstaged_items: LocalItems::new(Vec::new()),
             categories: Categories::new(),
