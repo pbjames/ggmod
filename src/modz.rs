@@ -14,7 +14,7 @@ type MutModClosure = dyn FnMut(&mut Mod) -> Result<()>;
 #[derive(Debug, Clone)]
 pub struct LocalCollection {
     registry_path: path::PathBuf,
-    mods: Vec<Mod>,
+    pub mods: Vec<Mod>,
 }
 
 impl Default for LocalCollection {
@@ -32,10 +32,6 @@ impl LocalCollection {
             registry_path: path.clone(),
             mods: Self::load_mods(&path).unwrap_or_default(),
         }
-    }
-
-    pub fn mods(&self) -> &Vec<Mod> {
-        &self.mods
     }
 
     fn load_mods(path: &path::PathBuf) -> Option<Vec<Mod>> {
@@ -65,8 +61,8 @@ impl LocalCollection {
         )
     }
 
-    pub fn filter_and_copy_by(&self, fun: Box<dyn FnMut(&&Mod) -> bool>) -> Vec<Mod> {
-        self.mods().iter().filter(fun).cloned().collect()
+    pub fn filter_and_copy_by(&self, fun: Box<dyn Fn(&&Mod) -> bool>) -> Vec<Mod> {
+        self.mods.iter().filter(fun).cloned().collect()
     }
 
     fn write_mods(&self) -> Option<()> {
