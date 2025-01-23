@@ -7,7 +7,7 @@ use ratatui::{
 use crate::modz::LocalCollection;
 
 use super::{
-    app::{App, Window},
+    app::{App, View, Window},
     state::Itemized,
     ui::show_ui,
 };
@@ -63,8 +63,14 @@ fn handle_event(app: &mut App) -> Result<bool> {
                     Window::Main => match key.code {
                         KeyCode::Char('H') => app.toggle_view(),
                         KeyCode::Char('L') => app.toggle_view(),
-                        KeyCode::Char('h') | KeyCode::Left => app.toggle_sides(),
-                        KeyCode::Char('l') | KeyCode::Right => app.toggle_sides(),
+                        KeyCode::Char('h') | KeyCode::Left => match app.view {
+                            View::Manage(_) => app.toggle_sides(),
+                            View::Browse => app.gallery_prev(),
+                        },
+                        KeyCode::Char('l') | KeyCode::Right => match app.view {
+                            View::Manage(_) => app.toggle_sides(),
+                            View::Browse => app.gallery_next(),
+                        },
                         KeyCode::Char('j') | KeyCode::Down => app.next(),
                         KeyCode::Char('k') | KeyCode::Up => app.previous(),
                         KeyCode::Enter => app.select(),

@@ -41,6 +41,8 @@ pub enum Window {
 /// current state beind held
 pub struct App<'a> {
     collection: &'a mut LocalCollection,
+    page: usize,
+    gallery_page: usize,
     pub popup_items: PopupItems,
     pub online_items: OnlineItems,
     pub staged_items: LocalItems,
@@ -50,7 +52,6 @@ pub struct App<'a> {
     pub view: View,
     pub window: CyclicState<WindowIter, Window>,
     pub sort: CyclicState<FeedFilterIter, FeedFilter>,
-    pub page: usize,
     pub image_states: HashMap<PathBuf, RefCell<StatefulProtocol>>,
 }
 
@@ -68,6 +69,7 @@ impl<'a> App<'a> {
             window: CyclicState::new(Window::iter(), Window::Search),
             sort: CyclicState::new(FeedFilter::iter(), FeedFilter::Recent),
             page: 0,
+            gallery_page: 0,
             image_states: HashMap::new(),
         };
         this.reregister();
@@ -217,6 +219,22 @@ impl<'a> App<'a> {
             }
         }
     }
+
+    pub fn gallery_prev(&mut self) {
+        if self.gallery_page == 0 {
+            return;
+        };
+        self.gallery_page -= 1;
+    }
+
+    pub fn gallery_next(&mut self) {
+        self.gallery_page += 1;
+    }
+
+    pub fn gallery_page(&self) -> usize {
+        self.gallery_page
+    }
+
     // TODO: Toasts
     // + Perf. optimsation
     // + Sorting tables

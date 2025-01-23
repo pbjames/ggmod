@@ -39,6 +39,6 @@ where
 }
 
 pub fn image_support() -> bool {
-    // TODO: Fix extreme lag and finish this
+    // TODO: Finish this
     true
 }
