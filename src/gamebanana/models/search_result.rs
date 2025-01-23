@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use ratatui::{
     style::{Color, Stylize},
     widgets::Row,
@@ -28,6 +30,15 @@ pub struct GBSearchEntry {
 impl GBSearchEntry {
     pub fn mod_page(&self) -> Result<GBModPage> {
         GBModPage::build(self.row).map(|page| if self.is_nsfw { page.set_nsfw() } else { page })
+    }
+
+    pub fn download_media(&self) -> Vec<PathBuf> {
+        self.preview_media
+            .clone()
+            .into_iter()
+            .map(|m| m.fetch())
+            .filter_map(Result::ok)
+            .collect()
     }
 }
 

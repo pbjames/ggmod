@@ -1,10 +1,13 @@
 use core::fmt::Debug;
+use std::{cell::RefCell, path::PathBuf, rc::Rc};
 
 use ratatui::{
+    layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Style},
     text::Span,
     widgets::Block,
 };
+use ratatui_image::picker::Picker;
 use strum::IntoEnumIterator;
 
 use crate::tui::{
@@ -40,5 +43,24 @@ where
 
 pub fn image_support() -> bool {
     // TODO: Fix extreme lag and finish this
-    false
+    true
+}
+
+pub fn divide_area_horiz(area: Rect, n: usize) -> Rc<[Rect]> {
+    let constraints = vec![Constraint::Fill(1); n];
+    Layout::default()
+        .constraints(constraints)
+        .direction(Direction::Horizontal)
+        .split(area)
+}
+
+pub fn check_insert_image(app: &mut App, picker: &mut Picker, path: &PathBuf) {
+    if !app.image_states.contains_key(path) {
+        let dyn_img = image::ImageReader::open(path.clone())
+            .unwrap()
+            .decode()
+            .unwrap();
+        let image = RefCell::new(picker.new_resize_protocol(dyn_img));
+        app.image_states.insert(path.clone(), image);
+    }
 }

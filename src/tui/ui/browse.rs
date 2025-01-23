@@ -1,5 +1,3 @@
-use std::{cell::RefCell, path::PathBuf};
-
 use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Style},
@@ -13,9 +11,7 @@ use crate::tui::{
     state::Itemized,
 };
 
-use anyhow::Result;
-
-use super::{hide_unfocused, image_support};
+use super::{check_insert_image, divide_area_horiz, hide_unfocused, image_support};
 
 pub fn browse_view(frame: &mut Frame, app: &mut App, area: Rect) {
     let widths = [
@@ -60,27 +56,17 @@ pub fn browse_view(frame: &mut Frame, app: &mut App, area: Rect) {
         &mut app.search_state().borrow_mut(),
     );
     if image_support() {
-        if let Some(idx) = app.online_items.select() {
-            let downloaded_media: Vec<PathBuf> = idx
-                .preview_media
-                .clone()
-                .into_iter()
-                .map(|m| m.fetch())
-                .filter_map(Result::ok)
-                .collect();
+        if let Some(entry) = app.online_items.select() {
+            let downloaded_media = entry.download_media();
+            let areas = divide_area_horiz(browse_and_image[1], downloaded_media.len());
             let mut picker = Picker::from_fontsize((8, 12));
-            for path in downloaded_media {
+            for (i, path) in downloaded_media.iter().enumerate() {
+                check_insert_image(app, &mut picker, path);
                 let orig = StatefulImage::new(None);
-                let dyn_img = image::ImageReader::open(path.clone())
-                    .unwrap()
-                    .decode()
-                    .unwrap();
-                let image = RefCell::new(picker.new_resize_protocol(dyn_img));
-                app.image_states.insert(path.clone(), image);
                 frame.render_stateful_widget(
                     orig,
-                    browse_and_image[1],
-                    &mut app.image_states.get(&path).unwrap().borrow_mut(),
+                    areas[i],
+                    &mut app.image_states.get(path).unwrap().borrow_mut(),
                 );
             }
         }
