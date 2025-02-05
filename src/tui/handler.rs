@@ -3,12 +3,14 @@ use ratatui::{
     prelude::Backend,
     Terminal,
 };
+use tokio::sync::broadcast::Receiver;
 
 use crate::modz::LocalCollection;
 
 use super::{
     app::{App, View, Window},
     state::Itemized,
+    termination::Termination,
     ui::show_ui,
 };
 
@@ -16,27 +18,38 @@ use anyhow::Result;
 
 pub fn run_tui(collection: &mut LocalCollection) {
     let mut terminal = ratatui::init();
-    let app_result = run(&mut terminal, collection);
+    let mut app = App::new(collection);
+    let (term, rx_terminate) = Termination::new();
+    tokio::spawn(async move {
+        draw_loop(
+            &mut terminal,
+            &mut app,
+            term.clone(),
+            rx_terminate.resubscribe(),
+        );
+    });
     ratatui::restore();
-    app_result.unwrap();
 }
 
-fn run<B: Backend>(terminal: &mut Terminal<B>, collection: &mut LocalCollection) -> Result<()> {
-    let mut app = App::new(collection);
+fn draw_loop<B: Backend>(
+    terminal: &mut Terminal<B>,
+    app: &mut App,
+    term: Termination,
+    mut rx_term: Receiver<usize>,
+) {
     loop {
-        terminal.draw(|f| show_ui(f, &mut app))?;
-        let res = handle_event(&mut app)?;
-        if res {
+        if rx_term.try_recv().unwrap_or(0) == 1 {
             break;
         }
+        terminal.draw(|f| show_ui(f, app)).unwrap();
+        handle_event(app, &term);
     }
-    Ok(())
 }
 
-fn handle_event(app: &mut App) -> Result<bool> {
-    if let Event::Key(key) = event::read()? {
+fn handle_event(app: &mut App, term: &Termination) {
+    if let Event::Key(key) = event::read().unwrap() {
         if key.kind == event::KeyEventKind::Release {
-            return Ok(false);
+            return;
         }
         if !app.popup_items.is_empty() {
             match key.code {
@@ -47,13 +60,13 @@ fn handle_event(app: &mut App) -> Result<bool> {
                 KeyCode::Enter => app.select(),
                 _ => (),
             }
-            return Ok(false);
+            return;
         }
         match &app.window.item {
             Window::Search => match key.code {
                 KeyCode::Left => app.sort.cycle_back(),
                 KeyCode::Right => app.sort.cycle(),
-                KeyCode::Enter => app.search()?,
+                KeyCode::Enter => app.search().unwrap(),
                 KeyCode::Backspace => app.backspace(),
                 KeyCode::Char(s) => app.type_search(s),
                 _ => (),
@@ -98,11 +111,10 @@ fn handle_event(app: &mut App) -> Result<bool> {
             }
         }
         match key.code {
-            KeyCode::Esc => return Ok(true),
+            KeyCode::Esc => term.exit(),
             KeyCode::Tab => app.window.cycle(),
             KeyCode::BackTab => app.window.cycle_back(),
             _ => (),
         }
     }
-    Ok(false)
 }
