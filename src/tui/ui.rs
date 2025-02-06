@@ -1,5 +1,5 @@
 mod util;
-use gallery::gallery;
+//use gallery::gallery;
 use util::*;
 mod browse;
 mod category;

@@ -1,8 +1,7 @@
-use std::{cell::RefCell, collections::HashMap, path::PathBuf};
+use std::cell::RefCell;
 
 use log::info;
 use ratatui::widgets::TableState;
-use ratatui_image::protocol::StatefulProtocol;
 use strum::{EnumIter, IntoEnumIterator};
 
 use crate::{
@@ -52,7 +51,7 @@ pub struct App {
     pub view: View,
     pub window: CyclicState<WindowIter, Window>,
     pub sort: CyclicState<FeedFilterIter, FeedFilter>,
-    pub image_states: HashMap<PathBuf, RefCell<StatefulProtocol>>,
+    //pub image_states: HashMap<PathBuf, RefCell<StatefulProtocol>>,
 }
 
 impl App {
@@ -70,7 +69,7 @@ impl App {
             sort: CyclicState::new(FeedFilter::iter(), FeedFilter::Recent),
             page: 0,
             gallery_page: 0,
-            image_states: HashMap::new(),
+            //image_states: HashMap::new(),
         };
         this.reregister();
         this
@@ -183,7 +182,7 @@ impl App {
             View::Browse => {
                 if let Some(entry) = self.online_items.select() {
                     let other = entry.clone();
-                    self.open_popup(entry.clone());
+                    self.open_popup(entry.clone()).await;
                     info!("Popup open {:?}", other);
                 }
             }
@@ -236,9 +235,9 @@ impl App {
         self.gallery_page += 1;
     }
 
-    pub fn gallery_page(&self) -> usize {
-        self.gallery_page
-    }
+    //pub fn gallery_page(&self) -> usize {
+    //    self.gallery_page
+    //}
 
     // TODO: Toasts
     // + Perf. optimsation
