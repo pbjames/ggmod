@@ -1,9 +1,11 @@
+use std::sync::Arc;
+
 use ratatui::{
     crossterm::event::{self, Event, KeyCode},
     prelude::Backend,
     Terminal,
 };
-use tokio::sync::broadcast::Receiver;
+use tokio::sync::{broadcast::Receiver, Mutex};
 
 use crate::modz::LocalCollection;
 
@@ -14,25 +16,20 @@ use super::{
     ui::show_ui,
 };
 
-use anyhow::Result;
+type Amt<B> = Arc<Mutex<Terminal<B>>>;
 
-pub fn run_tui(collection: &mut LocalCollection) {
-    let mut terminal = ratatui::init();
+pub fn run_tui(collection: LocalCollection) {
+    let terminal = Arc::new(Mutex::new(ratatui::init()));
     let mut app = App::new(collection);
     let (term, rx_terminate) = Termination::new();
     tokio::spawn(async move {
-        draw_loop(
-            &mut terminal,
-            &mut app,
-            term.clone(),
-            rx_terminate.resubscribe(),
-        );
+        draw_loop(terminal, &mut app, term.clone(), rx_terminate.resubscribe()).await
     });
     ratatui::restore();
 }
 
-fn draw_loop<B: Backend>(
-    terminal: &mut Terminal<B>,
+async fn draw_loop<B: Backend>(
+    terminal: Amt<B>,
     app: &mut App,
     term: Termination,
     mut rx_term: Receiver<usize>,
@@ -41,7 +38,7 @@ fn draw_loop<B: Backend>(
         if rx_term.try_recv().unwrap_or(0) == 1 {
             break;
         }
-        terminal.draw(|f| show_ui(f, app)).unwrap();
+        terminal.lock().await.draw(|f| show_ui(f, app)).unwrap();
         handle_event(app, &term);
     }
 }

@@ -39,8 +39,8 @@ pub enum Window {
 
 /// Basically a container that holds state from state.rs and acts differently based on
 /// current state beind held
-pub struct App<'a> {
-    collection: &'a mut LocalCollection,
+pub struct App {
+    collection: LocalCollection,
     page: usize,
     gallery_page: usize,
     pub popup_items: PopupItems,
@@ -55,8 +55,8 @@ pub struct App<'a> {
     pub image_states: HashMap<PathBuf, RefCell<StatefulProtocol>>,
 }
 
-impl<'a> App<'a> {
-    pub fn new(collection: &'a mut LocalCollection) -> App<'a> {
+impl App {
+    pub fn new(collection: LocalCollection) -> App {
         let mut this = App {
             collection,
             popup_items: PopupItems::default(),

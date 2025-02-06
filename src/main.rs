@@ -96,6 +96,6 @@ fn main() {
             *popular,
             *recent,
         ),
-        None => run_tui(&mut collection),
+        None => run_tui(collection),
     }
 }
