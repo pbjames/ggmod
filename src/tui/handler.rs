@@ -24,8 +24,10 @@ pub async fn run_tui(collection: LocalCollection) {
     let (term, rx_terminate) = Termination::new();
     tokio::spawn(async move {
         draw_loop(terminal, &mut app, term.clone(), rx_terminate.resubscribe()).await
-    });
-    ratatui::restore();
+    })
+    .await
+    .unwrap();
+    // theres nothing else running for now
 }
 
 async fn draw_loop<B: Backend>(
@@ -36,6 +38,7 @@ async fn draw_loop<B: Backend>(
 ) {
     loop {
         if rx_term.try_recv().unwrap_or(0) == 1 {
+            ratatui::restore();
             break;
         }
         terminal
