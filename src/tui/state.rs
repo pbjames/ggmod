@@ -70,7 +70,7 @@ pub struct OnlineItems {
 }
 
 impl OnlineItems {
-    pub fn search(
+    pub async fn search(
         &mut self,
         section: TypeFilter,
         sort: FeedFilter,
@@ -96,7 +96,7 @@ impl OnlineItems {
             .by_search(search_type)
             .of_category(category.filter(|id| *id != 0));
         trace!("Are we searching categorically: {category:?}");
-        let results = search.build().read_page(page)?;
+        let results = search.build().read_page(page).await?;
         self.refresh(results);
         self.query.clear();
         Ok(())
@@ -127,10 +127,10 @@ pub struct PopupItems {
 }
 
 impl PopupItems {
-    pub fn new(entry: GBSearchEntry) -> Self {
+    pub async fn new(entry: GBSearchEntry) -> Self {
         Self {
             state: RefCell::new(TableState::default()),
-            content: entry.mod_page().unwrap().files,
+            content: entry.mod_page().await.unwrap().files,
             entry: Some(entry),
         }
     }
@@ -194,11 +194,11 @@ pub struct Categories {
 }
 
 impl Categories {
-    pub fn new() -> Self {
+    pub async fn new() -> Self {
         let this = Self {
             state: RefCell::new(TableState::default()),
             // TODO: Find out where this magic number come from
-            content: GBModCategory::build(12914).unwrap_or_default(),
+            content: GBModCategory::build(12914).await.unwrap_or_default(),
         };
         this.state().borrow_mut().select(Some(0));
         this

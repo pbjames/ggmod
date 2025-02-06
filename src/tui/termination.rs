@@ -1,4 +1,4 @@
-use tokio::sync::broadcast::{self, error::SendError, Receiver, Sender};
+use tokio::sync::broadcast::{self, Receiver, Sender};
 
 #[derive(Clone)]
 pub struct Termination {
@@ -12,6 +12,6 @@ impl Termination {
     }
 
     pub fn exit(&self) {
-        self.tx_terminate.send(1);
+        let _ = self.tx_terminate.send(1);
     }
 }

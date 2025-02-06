@@ -18,9 +18,9 @@ use super::{
 
 type Amt<B> = Arc<Mutex<Terminal<B>>>;
 
-pub fn run_tui(collection: LocalCollection) {
+pub async fn run_tui(collection: LocalCollection) {
     let terminal = Arc::new(Mutex::new(ratatui::init()));
-    let mut app = App::new(collection);
+    let mut app = App::new(collection).await;
     let (term, rx_terminate) = Termination::new();
     tokio::spawn(async move {
         draw_loop(terminal, &mut app, term.clone(), rx_terminate.resubscribe()).await
@@ -38,12 +38,18 @@ async fn draw_loop<B: Backend>(
         if rx_term.try_recv().unwrap_or(0) == 1 {
             break;
         }
-        terminal.lock().await.draw(|f| show_ui(f, app)).unwrap();
-        handle_event(app, &term);
+        terminal
+            .lock()
+            .await
+            .draw(|f| {
+                show_ui(f, app);
+            })
+            .unwrap();
+        handle_event(app, &term).await;
     }
 }
 
-fn handle_event(app: &mut App, term: &Termination) {
+async fn handle_event(app: &mut App, term: &Termination) {
     if let Event::Key(key) = event::read().unwrap() {
         if key.kind == event::KeyEventKind::Release {
             return;
@@ -54,7 +60,7 @@ fn handle_event(app: &mut App, term: &Termination) {
                 KeyCode::Char('k') => app.popup_items.previous(),
                 KeyCode::Char('q') => app.popup_items.clear(),
                 KeyCode::Esc => app.popup_items.clear(),
-                KeyCode::Enter => app.select(),
+                KeyCode::Enter => app.select().await,
                 _ => (),
             }
             return;
@@ -63,7 +69,7 @@ fn handle_event(app: &mut App, term: &Termination) {
             Window::Search => match key.code {
                 KeyCode::Left => app.sort.cycle_back(),
                 KeyCode::Right => app.sort.cycle(),
-                KeyCode::Enter => app.search().unwrap(),
+                KeyCode::Enter => app.search().await.unwrap(),
                 KeyCode::Backspace => app.backspace(),
                 KeyCode::Char(s) => app.type_search(s),
                 _ => (),
@@ -83,7 +89,7 @@ fn handle_event(app: &mut App, term: &Termination) {
                         },
                         KeyCode::Char('j') | KeyCode::Down => app.next(),
                         KeyCode::Char('k') | KeyCode::Up => app.previous(),
-                        KeyCode::Enter => app.select(),
+                        KeyCode::Enter => app.select().await,
                         _ => (),
                     },
                     Window::Section => match key.code {

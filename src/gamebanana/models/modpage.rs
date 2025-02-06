@@ -42,8 +42,8 @@ const PROPS: [&str; 14] = [
 ];
 
 impl GBModPage {
-    pub fn download_file(&self, idx: usize) -> Result<path::PathBuf> {
-        self.files[idx].fetch()
+    pub async fn download_file(&self, idx: usize) -> Result<path::PathBuf> {
+        self.files[idx].fetch().await
     }
 
     pub fn set_nsfw(mut self) -> Self {
@@ -51,8 +51,8 @@ impl GBModPage {
         self
     }
 
-    pub fn build(id: usize) -> Result<GBModPage> {
-        let resp = reqwest::blocking::get(Self::url(id))?.text()?;
+    pub async fn build(id: usize) -> Result<GBModPage> {
+        let resp = reqwest::get(Self::url(id)).await?.text().await?;
         let conv = to_human(&resp)?;
         info!("successful mod page conversion");
         Ok(serde_json::from_str::<GBModPage>(&conv)?)

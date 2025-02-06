@@ -70,7 +70,7 @@ fn view_render(frame: &mut Frame, app: &mut App, area: Rc<[Rect]>) {
         View::Browse => {
             if image_support() {
                 browse_view(frame, app, browse_and_gallery[0]);
-                gallery(frame, app, browse_and_gallery[1]);
+                //gallery(frame, app, browse_and_gallery[1]).await;
             } else {
                 browse_view(frame, app, area[1]);
             }

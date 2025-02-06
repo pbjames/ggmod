@@ -40,5 +40,5 @@ where
 
 pub fn image_support() -> bool {
     // TODO: Finish this
-    true
+    false
 }

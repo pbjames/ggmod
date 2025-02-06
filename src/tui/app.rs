@@ -56,14 +56,14 @@ pub struct App {
 }
 
 impl App {
-    pub fn new(collection: LocalCollection) -> App {
+    pub async fn new(collection: LocalCollection) -> App {
         let mut this = App {
             collection,
             popup_items: PopupItems::default(),
             online_items: OnlineItems::default(),
             staged_items: LocalItems::new(Vec::new()),
             unstaged_items: LocalItems::new(Vec::new()),
-            categories: Categories::new(),
+            categories: Categories::new().await,
             section: CyclicState::new(TypeFilter::iter(), TypeFilter::Skin),
             view: View::Manage(ViewDir::Left),
             window: CyclicState::new(Window::iter(), Window::Search),
@@ -76,8 +76,8 @@ impl App {
         this
     }
 
-    pub fn open_popup(&mut self, entry: GBSearchEntry) {
-        self.popup_items = PopupItems::new(entry)
+    pub async fn open_popup(&mut self, entry: GBSearchEntry) {
+        self.popup_items = PopupItems::new(entry).await
     }
 
     pub fn reregister(&mut self) {
@@ -161,12 +161,13 @@ impl App {
         }
     }
 
-    pub fn select(&mut self) {
+    pub async fn select(&mut self) {
         if !self.popup_items.is_empty() {
             if let Some(idx) = self.popup_items.select_idx() {
                 let entry = self.popup_items.entry.clone();
                 self.collection
-                    .register_online_mod(entry.unwrap().mod_page().unwrap(), idx)
+                    .register_online_mod(entry.unwrap().mod_page().await.unwrap(), idx)
+                    .await
                     .unwrap();
                 self.popup_items.clear();
                 self.reregister();
@@ -190,16 +191,20 @@ impl App {
         self.reregister();
     }
 
-    pub fn search(&mut self) -> Result<()> {
+    pub async fn search(&mut self) -> Result<()> {
         // TODO: Make page size = term height
         match self.view {
             View::Manage(_) => Ok(()),
-            View::Browse => self.online_items.search(
-                self.section.item.clone(),
-                self.sort.item.clone(),
-                self.categories.select().map(|cat| cat.row),
-                self.page,
-            ),
+            View::Browse => {
+                self.online_items
+                    .search(
+                        self.section.item.clone(),
+                        self.sort.item.clone(),
+                        self.categories.select().map(|cat| cat.row),
+                        self.page,
+                    )
+                    .await
+            }
         }
     }
 

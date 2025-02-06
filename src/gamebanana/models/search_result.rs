@@ -28,17 +28,19 @@ pub struct GBSearchEntry {
 }
 
 impl GBSearchEntry {
-    pub fn mod_page(&self) -> Result<GBModPage> {
-        GBModPage::build(self.row).map(|page| if self.is_nsfw { page.set_nsfw() } else { page })
+    pub async fn mod_page(&self) -> Result<GBModPage> {
+        GBModPage::build(self.row)
+            .await
+            .map(|page| if self.is_nsfw { page.set_nsfw() } else { page })
     }
 
-    pub fn download_media(&self) -> Vec<PathBuf> {
-        self.preview_media
-            .clone()
-            .into_iter()
-            .map(|m| m.fetch())
-            .filter_map(Result::ok)
-            .collect()
+    pub async fn download_media(&self) -> Vec<PathBuf> {
+        let mut collected_media = Vec::new();
+        for media in self.preview_media.clone() {
+            let m = media.fetch().await;
+            collected_media.push(m);
+        }
+        collected_media.into_iter().filter_map(Result::ok).collect()
     }
 }
 

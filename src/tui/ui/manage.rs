@@ -30,7 +30,7 @@ pub fn manage_view(frame: &mut Frame, app: &App, area: Rect) {
     );
 }
 
-fn left_table<'a>(app: &'a App, widths: [Constraint; 3]) -> Table<'a> {
+fn left_table(app: &App, widths: [Constraint; 3]) -> Table<'_> {
     let block = Block::default()
         .borders(Borders::ALL)
         .title("[2]-Staged")
@@ -44,7 +44,7 @@ fn left_table<'a>(app: &'a App, widths: [Constraint; 3]) -> Table<'a> {
         .row_highlight_style(Color::Green)
 }
 
-fn right_table<'a>(app: &'a App, widths: [Constraint; 3]) -> Table<'a> {
+fn right_table(app: &App, widths: [Constraint; 3]) -> Table<'_> {
     let block = Block::default()
         .borders(Borders::ALL)
         .title("Unstaged")

@@ -21,10 +21,10 @@ impl Search {
         self.url.clone() + &format!("&_nPage={n}")
     }
 
-    pub fn read_page(&self, n: usize) -> Result<Vec<GBSearchEntry>> {
+    pub async fn read_page(&self, n: usize) -> Result<Vec<GBSearchEntry>> {
         let url = self.page(n);
         info!("url generated: {url}");
-        let resp = reqwest::blocking::get(url)?.text()?;
+        let resp = reqwest::get(url).await?.text().await?;
         trace!("resp: {resp}");
         let conv = to_human(&resp)?;
         trace!("conv: {conv}");

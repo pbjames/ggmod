@@ -21,23 +21,23 @@ pub struct GBPreviewMedia {
 }
 
 impl GBPreviewMedia {
-    pub fn fetch(&self) -> Result<PathBuf> {
+    pub async fn fetch(&self) -> Result<PathBuf> {
         let file = download_path().unwrap_or_default().join(&self.file);
         if file.exists() && file.is_file() {
             trace!("Preview media already exists, doing nothing");
         } else {
             debug!("{}", format!("Archive {file:?} attempting to download"));
-            self.download_to(&file)?;
+            self.download_to(&file).await?;
         }
         Ok(file)
     }
 
-    fn download_to<'a>(&self, path: &'a PathBuf) -> Result<&'a PathBuf> {
+    async fn download_to<'a>(&self, path: &'a PathBuf) -> Result<&'a PathBuf> {
         info!("Downloading new archive..");
         let url = format!("{}/{}", self.base_url.clone(), &self.file);
-        let response = reqwest::blocking::get(url)?;
+        let response = reqwest::get(url).await?;
         let mut file = fs::File::create(path)?;
-        let mut content = io::Cursor::new(response.bytes()?);
+        let mut content = io::Cursor::new(response.bytes().await?);
         io::copy(&mut content, &mut file)?;
         Ok(path)
     }

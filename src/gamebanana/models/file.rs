@@ -22,23 +22,23 @@ pub struct GBFile {
 }
 
 impl GBFile {
-    fn download_to<'a>(&self, path: &'a path::PathBuf) -> Result<&'a path::PathBuf> {
+    async fn download_to<'a>(&self, path: &'a path::PathBuf) -> Result<&'a path::PathBuf> {
         info!("Downloading new archive..");
-        let response = reqwest::blocking::get(&self.download_url)?;
+        let response = reqwest::get(&self.download_url).await?;
         let mut file = fs::File::create(path)?;
-        let mut content = io::Cursor::new(response.bytes()?);
+        let mut content = io::Cursor::new(response.bytes().await?);
         io::copy(&mut content, &mut file)?;
         Ok(path)
     }
 
-    pub fn fetch(&self) -> Result<path::PathBuf> {
+    pub async fn fetch(&self) -> Result<path::PathBuf> {
         let file = download_path().unwrap_or_default().join(&self.file);
         let dir = file.with_extension("");
         if dir.exists() && dir.is_dir() {
             trace!("Mod already exists, doing nothing");
             Ok(dir)
         } else {
-            self.download_to(&file)?;
+            self.download_to(&file).await?;
             let src = fs::File::open(&file)?;
             debug!("Archive {file:?} attempting decompress to {dir:?}");
             if let Some(ext) = file.extension() {

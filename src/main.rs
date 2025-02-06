@@ -63,7 +63,8 @@ enum Commands {
     },
 }
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let cli = Cli::parse();
     simple_logging::log_to_file(
         "log.txt",
@@ -75,9 +76,11 @@ fn main() {
         },
     )
     .expect("Couldn't setup logging");
-    let mut collection = LocalCollection::new();
+    let collection = LocalCollection::new();
     match &cli.command {
-        Some(Commands::Download { mod_id, install }) => download(collection, *mod_id, *install),
+        Some(Commands::Download { mod_id, install }) => {
+            download(collection, *mod_id, *install).await
+        }
         Some(Commands::Install { mod_id }) => install(collection, *mod_id),
         Some(Commands::Uninstall { mod_id }) => uninstall(collection, *mod_id),
         Some(Commands::List {}) => list_all(collection),
@@ -88,14 +91,17 @@ fn main() {
             featured,
             popular,
             recent,
-        }) => search(
-            *page,
-            *page_size,
-            name.clone(),
-            *featured,
-            *popular,
-            *recent,
-        ),
-        None => run_tui(collection),
+        }) => {
+            search(
+                *page,
+                *page_size,
+                name.clone(),
+                *featured,
+                *popular,
+                *recent,
+            )
+            .await
+        }
+        None => run_tui(collection).await,
     }
 }

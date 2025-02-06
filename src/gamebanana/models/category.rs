@@ -14,8 +14,8 @@ pub struct GBModCategory {
 }
 
 impl GBModCategory {
-    pub fn build(id: usize) -> Result<Vec<GBModCategory>> {
-        let resp = reqwest::blocking::get(Self::url(id))?.text()?;
+    pub async fn build(id: usize) -> Result<Vec<GBModCategory>> {
+        let resp = reqwest::get(Self::url(id)).await?.text().await?;
         let conv = to_human(&resp)?;
         info!("successful mod page conversion");
         let mut cats = serde_json::from_str::<Vec<GBModCategory>>(&conv)?;

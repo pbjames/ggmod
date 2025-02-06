@@ -5,10 +5,10 @@ use ratatui_image::{picker::Picker, StatefulImage};
 
 use crate::tui::{app::App, state::Itemized};
 
-pub fn gallery(frame: &mut Frame, app: &mut App, area: Rect) {
+pub async fn gallery(frame: &mut Frame<'_>, app: &mut App, area: Rect) {
     let mut picker = Picker::from_fontsize((8, 12));
     if let Some(entry) = app.online_items.select() {
-        let downloaded_media = entry.download_media();
+        let downloaded_media = entry.download_media().await;
         // XXX: Fucking stupid fix
         while app.gallery_page() >= downloaded_media.len() {
             app.gallery_prev();

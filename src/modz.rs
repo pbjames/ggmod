@@ -39,8 +39,8 @@ impl LocalCollection {
         Some(serde_json::from_reader(file).unwrap())
     }
 
-    pub fn register_online_mod(&mut self, gbmod: GBModPage, idx: usize) -> Result<()> {
-        let new_mod = Mod::build(gbmod, idx)?;
+    pub async fn register_online_mod(&mut self, gbmod: GBModPage, idx: usize) -> Result<()> {
+        let new_mod = Mod::build(gbmod, idx).await?;
         self.mods.push(new_mod);
         Ok(())
     }
@@ -94,11 +94,11 @@ pub struct Mod {
 }
 
 impl Mod {
-    fn build(gbmod: GBModPage, idx: usize) -> Result<Mod> {
+    async fn build(gbmod: GBModPage, idx: usize) -> Result<Mod> {
         let m = Mod {
             id: gbmod.row,
             character: gbmod.category.name.clone(),
-            path: gbmod.download_file(idx)?,
+            path: gbmod.download_file(idx).await?,
             name: gbmod.name,
             description: gbmod.description,
             staged: false,

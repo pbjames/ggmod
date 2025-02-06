@@ -7,7 +7,7 @@ use super::{
     modz::LocalCollection,
 };
 
-pub fn search(
+pub async fn search(
     page: usize,
     page_size: Option<usize>,
     name: Option<String>,
@@ -30,6 +30,7 @@ pub fn search(
         })
         .build()
         .read_page(page)
+        .await
         .expect("Couldn't get search results");
     for entry in entries {
         let mut name = entry.name.clone();
@@ -53,8 +54,10 @@ pub fn list_all(col: LocalCollection) {
     }
 }
 
-pub fn download(mut col: LocalCollection, mod_id: usize, do_install: bool) {
-    let gbmod = GBModPage::build(mod_id).expect("Couldn't get online mod page");
+pub async fn download(mut col: LocalCollection, mod_id: usize, do_install: bool) {
+    let gbmod = GBModPage::build(mod_id)
+        .await
+        .expect("Couldn't get online mod page");
     let opts = &gbmod.files;
     for (i, f) in opts.iter().enumerate() {
         println!("[{}] {:?}", (i + 1), f.file);
@@ -62,6 +65,7 @@ pub fn download(mut col: LocalCollection, mod_id: usize, do_install: bool) {
     println!("Choose index:");
     let input = choose_num() - 1;
     col.register_online_mod(gbmod, input)
+        .await
         .expect("Couldn't download mod");
     if do_install {
         install(col, mod_id)
