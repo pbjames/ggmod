@@ -21,14 +21,15 @@ type Am<T> = Arc<Mutex<T>>;
 pub async fn run_tui(collection: LocalCollection) {
     let terminal = Arc::new(Mutex::new(ratatui::init()));
     let app = Arc::new(Mutex::new(App::new(collection).await));
-    let app_copy = app.clone();
     let (termination, rx_terminate) = Termination::new();
-    let rx_terminate_copy = rx_terminate.resubscribe();
-    tokio::spawn(async move { draw_loop(terminal, app_copy, rx_terminate).await });
-    event_loop(app, termination, rx_terminate_copy).await;
+    let (app_copy, rx_terminate_copy) = (app.clone(), rx_terminate.resubscribe());
+    tokio::spawn(async move { draw_loop(terminal, app, rx_terminate).await });
+    tokio::spawn(async move { event_loop(app_copy, termination, rx_terminate_copy).await })
+        .await
+        .unwrap();
 }
 
-async fn event_loop(app: Arc<Mutex<App>>, term: Termination, mut rx_term: Receiver<usize>) {
+async fn event_loop(app: Am<App>, term: Termination, mut rx_term: Receiver<usize>) {
     loop {
         if rx_term.try_recv().unwrap_or(0) == 1 {
             ratatui::restore();

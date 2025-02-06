@@ -12,6 +12,6 @@ impl Termination {
     }
 
     pub fn exit(&self) {
-        let _ = self.tx_terminate.send(1);
+        self.tx_terminate.send(1).unwrap();
     }
 }
