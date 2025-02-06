@@ -48,6 +48,7 @@ pub struct App {
     pub unstaged_items: LocalItems,
     pub categories: Categories,
     pub section: CyclicState<TypeFilterIter, TypeFilter>,
+    pub cursor: Option<usize>,
     pub view: View,
     pub window: CyclicState<WindowIter, Window>,
     pub sort: CyclicState<FeedFilterIter, FeedFilter>,
@@ -64,6 +65,7 @@ impl App {
             unstaged_items: LocalItems::new(Vec::new()),
             categories: Categories::new().await,
             section: CyclicState::new(TypeFilter::iter(), TypeFilter::Skin),
+            cursor: None,
             view: View::Manage(ViewDir::Left),
             window: CyclicState::new(Window::iter(), Window::Search),
             sort: CyclicState::new(FeedFilter::iter(), FeedFilter::Recent),
@@ -120,6 +122,7 @@ impl App {
             View::Manage(dir) => self.local_items_mut(dir).query.push(c),
             View::Browse => self.online_items.query.push(c),
         }
+        self.cursor = Some(self.cursor.map_or(1, |v| v + 1));
     }
 
     pub fn backspace(&mut self) {
@@ -127,6 +130,7 @@ impl App {
             View::Manage(dir) => self.local_items_mut(dir).query.pop(),
             View::Browse => self.online_items.query.pop(),
         };
+        self.cursor = self.cursor.map(|v| if v > 0 { v - 1 } else { v });
     }
 
     pub fn search_query(&self) -> String {
@@ -150,6 +154,7 @@ impl App {
                 View::Browse => View::Manage(ViewDir::Left),
             }
         }
+        self.reset_cursor();
     }
 
     pub fn toggle_sides(&mut self) {
@@ -233,6 +238,11 @@ impl App {
 
     pub fn gallery_next(&mut self) {
         self.gallery_page += 1;
+    }
+
+    pub fn reset_cursor(&mut self) {
+        let length = self.search_query().len();
+        self.cursor = if length == 0 { None } else { Some(length) }
     }
 
     //pub fn gallery_page(&self) -> usize {

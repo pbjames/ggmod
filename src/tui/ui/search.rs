@@ -1,6 +1,6 @@
 use crate::tui::app::{App, Window};
 use ratatui::{
-    layout::{Constraint, Direction, Layout, Rect},
+    layout::{Constraint, Direction, Layout, Margin, Rect},
     text::Line,
     widgets::{Block, Borders, Paragraph},
     Frame,
@@ -24,6 +24,10 @@ pub fn search_bar(frame: &mut Frame, app: &App, area: Rect) {
     let sorts = sorts_attachment_widget(app);
     frame.render_widget(search, search_and_sort[0]);
     frame.render_widget(sorts, search_and_sort[1]);
+    frame.set_cursor_position((
+        ((app.cursor.unwrap_or(0) + 1) as u16),
+        search_and_sort[0].inner(Margin::new(1, 1)).y,
+    ));
 }
 
 fn sorts_attachment_widget<'a>(app: &App) -> Paragraph<'a> {
