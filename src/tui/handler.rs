@@ -83,6 +83,13 @@ async fn handle_event(app: &mut App, term: &Termination) {
                 KeyCode::Right => app.sort.cycle(),
                 KeyCode::Enter => app.search().await.unwrap(),
                 KeyCode::Backspace => app.backspace(),
+                KeyCode::Char(s) if app.search_query().is_empty() => match s {
+                    '1' => app.window.cycle_to(Window::Search),
+                    '2' => app.window.cycle_to(Window::Main),
+                    '3' => app.window.cycle_to(Window::Category),
+                    '4' => app.window.cycle_to(Window::Section),
+                    other => app.type_search(other),
+                },
                 KeyCode::Char(s) => app.type_search(s),
                 _ => (),
             },
@@ -105,13 +112,13 @@ async fn handle_event(app: &mut App, term: &Termination) {
                         _ => (),
                     },
                     Window::Section => match key.code {
-                        KeyCode::Char('j') => app.section.cycle(),
-                        KeyCode::Char('k') => app.section.cycle_back(),
+                        KeyCode::Char('j') | KeyCode::Down => app.section.cycle(),
+                        KeyCode::Char('k') | KeyCode::Up => app.section.cycle_back(),
                         _ => (),
                     },
                     Window::Category => match key.code {
-                        KeyCode::Char('j') => app.categories.next(),
-                        KeyCode::Char('k') => app.categories.previous(),
+                        KeyCode::Char('j') | KeyCode::Down => app.categories.next(),
+                        KeyCode::Char('k') | KeyCode::Up => app.categories.previous(),
                         _ => (),
                     },
                     _ => (),
@@ -121,6 +128,7 @@ async fn handle_event(app: &mut App, term: &Termination) {
                     KeyCode::Char('2') => app.window.cycle_to(Window::Main),
                     KeyCode::Char('3') => app.window.cycle_to(Window::Category),
                     KeyCode::Char('4') => app.window.cycle_to(Window::Section),
+                    KeyCode::Char('q') => term.exit(),
                     _ => (),
                 }
             }

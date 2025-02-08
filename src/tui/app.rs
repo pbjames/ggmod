@@ -223,8 +223,8 @@ impl App {
             Window::Category => "\nj/k - scroll",
             Window::Section => "\nj/k - scroll",
             Window::Search => {
-                "\ntype to search\n\
-                 <arrow keys> to sort by different stuff"
+                "\ntype and press enter to search\n\
+                 arrow keys to sort by different stuff"
             }
         }
     }
