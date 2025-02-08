@@ -9,7 +9,7 @@ use crate::{
         builder::{FeedFilter, FeedFilterIter, TypeFilter, TypeFilterIter},
         models::search_result::GBSearchEntry,
     },
-    modz::LocalCollection,
+    modz::{LocalCollection, Mod},
 };
 
 use anyhow::Result;
@@ -218,12 +218,13 @@ impl App {
                 "Space - Install / Uninstall from game dir\n\
                  H / L - Switch local/gamebanana mods\n\
                  h / l - local - Switch sides\n\
-                         online - Scroll pages"
+                         online - Scroll pages\n\
+                 x - local - Delete mod permanently"
             }
-            Window::Category => "\nj/k - scroll",
-            Window::Section => "\nj/k - scroll",
+            Window::Category => "j/k - scroll",
+            Window::Section => "j/k - scroll",
             Window::Search => {
-                "\ntype and press enter to search\n\
+                "type and press enter to search\n\
                  arrow keys to sort by different stuff"
             }
         }
@@ -243,6 +244,18 @@ impl App {
     pub fn reset_cursor(&mut self) {
         let length = self.search_query().len();
         self.cursor = if length == 0 { None } else { Some(length) }
+    }
+
+    pub fn remove(&mut self) -> Option<()> {
+        if let View::Manage(dir) = self.view {
+            if let Some(chosen) = self.local_items(dir).select() {
+                let pred = |m: &Mod| m.id == chosen.id;
+                let idx = self.collection.mods.iter().position(pred)?;
+                self.collection.mods.remove(idx);
+                self.reregister();
+            }
+        }
+        Some(())
     }
 
     //pub fn gallery_page(&self) -> usize {

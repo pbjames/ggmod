@@ -108,6 +108,7 @@ async fn handle_event(app: &mut App, term: &Termination) {
                         },
                         KeyCode::Char('j') | KeyCode::Down => app.next(),
                         KeyCode::Char('k') | KeyCode::Up => app.previous(),
+                        KeyCode::Char('x') => app.remove().unwrap(),
                         KeyCode::Enter => app.select().await,
                         _ => (),
                     },

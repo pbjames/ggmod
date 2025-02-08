@@ -41,7 +41,7 @@ pub fn show_ui(frame: &mut Frame, app: &mut App) {
     let side_chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
-            Constraint::Length(6),
+            Constraint::Length(12),
             Constraint::Fill(2),
             Constraint::Fill(1),
         ])
