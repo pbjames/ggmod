@@ -71,7 +71,10 @@ async fn handle_event(app: &mut App, term: &Termination) {
                 KeyCode::Char('j') => app.popup_items.next(),
                 KeyCode::Char('k') => app.popup_items.previous(),
                 KeyCode::Char('q') => app.popup_items.clear(),
-                KeyCode::Esc => app.popup_items.clear(),
+                KeyCode::Esc => {
+                    app.popup_items.clear();
+                    app.image_states.clear();
+                }
                 KeyCode::Enter => app.select().await,
                 _ => (),
             }

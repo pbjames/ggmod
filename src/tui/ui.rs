@@ -1,4 +1,5 @@
 mod util;
+use gallery::try_draw_gallery;
 //use gallery::gallery;
 use util::*;
 mod browse;
@@ -16,7 +17,7 @@ use std::rc::Rc;
 use browse::browse_view;
 use category::category;
 use manage::manage_view;
-use popup::popup;
+use popup::try_popup;
 use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
     Frame,
@@ -24,10 +25,7 @@ use ratatui::{
 use search::search_bar;
 use section::section;
 
-use super::{
-    app::{App, View},
-    state::Itemized,
-};
+use super::app::{App, View};
 
 pub fn show_ui(frame: &mut Frame, app: &mut App) {
     let view_and_side = Layout::default()
@@ -48,9 +46,8 @@ pub fn show_ui(frame: &mut Frame, app: &mut App) {
         .split(view_and_side[1]);
     view_render(frame, app, view_chunks);
     side_render(frame, app, side_chunks);
-    if !app.popup_items.is_empty() {
-        popup(frame, app, view_and_side[0]);
-    }
+    try_popup(frame, app, view_and_side[1]);
+    try_draw_gallery(frame, app, view_and_side[0])
 }
 
 fn side_render(frame: &mut Frame, app: &mut App, area: Rc<[Rect]>) {
@@ -77,3 +74,23 @@ fn view_render(frame: &mut Frame, app: &mut App, area: Rc<[Rect]>) {
         }
     }
 }
+
+//pub fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
+//    let popup_layout = Layout::default()
+//        .direction(Direction::Vertical)
+//        .constraints([
+//            Constraint::Percentage((100 - percent_y) / 2),
+//            Constraint::Percentage(percent_y),
+//            Constraint::Percentage((100 - percent_y) / 2),
+//        ])
+//        .split(r);
+//
+//    Layout::default()
+//        .direction(Direction::Horizontal)
+//        .constraints([
+//            Constraint::Percentage((100 - percent_x) / 2),
+//            Constraint::Percentage(percent_x),
+//            Constraint::Percentage((100 - percent_x) / 2),
+//        ])
+//        .split(popup_layout[1])[1]
+//}

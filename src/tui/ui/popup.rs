@@ -1,13 +1,16 @@
 use ratatui::{
-    layout::{Constraint, Direction, Layout, Rect},
+    layout::{Constraint, Rect},
     style::Color,
     widgets::{Block, Borders, Clear, Row, Table},
     Frame,
 };
 
-use crate::tui::app::App;
+use crate::tui::{app::App, state::Itemized};
 
-pub fn popup(frame: &mut Frame, app: &mut App, area: Rect) {
+pub fn try_popup(frame: &mut Frame, app: &mut App, area: Rect) {
+    if app.popup_items.is_empty() {
+        return;
+    }
     let header = Row::new(vec!["Name", "Downloads", "Description"]);
     let block = Block::default()
         .borders(Borders::ALL)
@@ -22,27 +25,6 @@ pub fn popup(frame: &mut Frame, app: &mut App, area: Rect) {
         .block(block)
         .header(header)
         .row_highlight_style(Color::Yellow);
-    let rect = centered_rect(55, 45, area);
-    frame.render_widget(Clear, rect);
-    frame.render_stateful_widget(table, rect, &mut app.popup_items.state.borrow_mut());
-}
-
-fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
-    let popup_layout = Layout::default()
-        .direction(Direction::Vertical)
-        .constraints([
-            Constraint::Percentage((100 - percent_y) / 2),
-            Constraint::Percentage(percent_y),
-            Constraint::Percentage((100 - percent_y) / 2),
-        ])
-        .split(r);
-
-    Layout::default()
-        .direction(Direction::Horizontal)
-        .constraints([
-            Constraint::Percentage((100 - percent_x) / 2),
-            Constraint::Percentage(percent_x),
-            Constraint::Percentage((100 - percent_x) / 2),
-        ])
-        .split(popup_layout[1])[1]
+    frame.render_widget(Clear, area);
+    frame.render_stateful_widget(table, area, &mut app.popup_items.state.borrow_mut());
 }

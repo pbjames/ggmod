@@ -1,7 +1,9 @@
-use std::cell::RefCell;
+use std::{cell::RefCell, path::PathBuf};
 
+use indexmap::IndexMap;
 use log::info;
 use ratatui::widgets::TableState;
+use ratatui_image::{picker::Picker, protocol::StatefulProtocol};
 use strum::{EnumIter, IntoEnumIterator};
 
 use crate::{
@@ -52,7 +54,7 @@ pub struct App {
     pub view: View,
     pub window: CyclicState<WindowIter, Window>,
     pub sort: CyclicState<FeedFilterIter, FeedFilter>,
-    //pub image_states: HashMap<PathBuf, RefCell<StatefulProtocol>>,
+    pub image_states: IndexMap<PathBuf, RefCell<StatefulProtocol>>,
 }
 
 impl App {
@@ -71,14 +73,15 @@ impl App {
             sort: CyclicState::new(FeedFilter::iter(), FeedFilter::Recent),
             page: 0,
             gallery_page: 0,
-            //image_states: HashMap::new(),
+            image_states: IndexMap::new(),
         };
         this.reregister();
         this
     }
 
     pub async fn open_popup(&mut self, entry: GBSearchEntry) {
-        self.popup_items = PopupItems::new(entry).await
+        self.popup_items = PopupItems::new(entry).await;
+        self.request_gallery_images().await;
     }
 
     pub fn reregister(&mut self) {
@@ -238,7 +241,13 @@ impl App {
     }
 
     pub fn gallery_next(&mut self) {
-        self.gallery_page += 1;
+        if self.gallery_page < self.image_states.len() - 1 {
+            self.gallery_page += 1;
+        }
+    }
+
+    pub fn gallery_page(&self) -> usize {
+        self.gallery_page
     }
 
     pub fn reset_cursor(&mut self) {
@@ -258,9 +267,27 @@ impl App {
         Some(())
     }
 
-    //pub fn gallery_page(&self) -> usize {
-    //    self.gallery_page
-    //}
+    pub async fn request_gallery_images(self: &mut App) {
+        let mut picker = Picker::from_fontsize((8, 12));
+        if let Some(entry) = self.online_items.select() {
+            // TODO: Make this request more images on demand or something
+            let downloaded_media = entry.download_media(1).await;
+            if let Some(path) = downloaded_media.get(self.gallery_page()) {
+                self.check_insert_image(&mut picker, path);
+            }
+        }
+    }
+
+    fn check_insert_image(self: &mut App, picker: &mut Picker, path: &PathBuf) {
+        if !self.image_states.contains_key(path) {
+            let dyn_img = image::ImageReader::open(path.clone())
+                .unwrap()
+                .decode()
+                .unwrap();
+            let image = RefCell::new(picker.new_resize_protocol(dyn_img));
+            self.image_states.insert(path.clone(), image);
+        }
+    }
 
     // TODO: Toasts
     // + Perf. optimsation

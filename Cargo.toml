@@ -10,6 +10,7 @@ compress-tools = { version = "0.15.1", features = ["blocking"] }
 dircpy = "0.3.19"
 directories = "6.0.0"
 image = "0.25.5"
+indexmap = "2.7.1"
 log = "0.4.22"
 ratatui = "0.29.0"
 ratatui-image = "4.2.0"

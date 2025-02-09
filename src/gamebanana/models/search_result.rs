@@ -34,9 +34,12 @@ impl GBSearchEntry {
             .map(|page| if self.is_nsfw { page.set_nsfw() } else { page })
     }
 
-    pub async fn download_media(&self) -> Vec<PathBuf> {
+    pub async fn download_media(&self, count: usize) -> Vec<PathBuf> {
         let mut collected_media = Vec::new();
-        for media in self.preview_media.clone() {
+        for (i, media) in self.preview_media.clone().iter().enumerate() {
+            if i == count {
+                break;
+            }
             let m = media.fetch().await;
             collected_media.push(m);
         }
