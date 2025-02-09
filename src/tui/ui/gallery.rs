@@ -9,7 +9,7 @@ use super::centered_rect;
 // XXX: Kinda stupid that this is the only function here but everything is designed
 // around app state oh well
 pub fn try_draw_gallery(frame: &mut Frame<'_>, app: &mut App, area: Rect) {
-    let rect = centered_rect(80, 80, area);
+    let rect = centered_rect(100, 100, area);
     if let Some((_, state)) = app.image_states.get_index(app.gallery_page()) {
         info!(
             "gallery_page: {}, images: {}",

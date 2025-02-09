@@ -283,7 +283,8 @@ impl App {
             let dyn_img = image::ImageReader::open(path.clone())
                 .unwrap()
                 .decode()
-                .unwrap();
+                .unwrap()
+                .resize(400, 400, ratatui_image::FilterType::Gaussian);
             let image = RefCell::new(picker.new_resize_protocol(dyn_img));
             self.image_states.insert(path.clone(), image);
         }
