@@ -16,7 +16,7 @@ pub fn try_popup(frame: &mut Frame, app: &mut App, area: Rect) {
         .borders(Borders::ALL)
         .title("Select a variant");
     let widths = [
-        Constraint::Length(35),
+        Constraint::Length(20),
         Constraint::Length(9),
         Constraint::Fill(1),
     ];
