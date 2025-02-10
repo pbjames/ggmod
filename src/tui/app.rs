@@ -177,6 +177,7 @@ impl App {
                     .await
                     .unwrap();
                 self.popup_items.clear();
+                self.image_states.clear();
                 self.reregister();
                 return;
             }
