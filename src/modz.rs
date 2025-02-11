@@ -1,4 +1,4 @@
-use crate::{gamebanana::models::modpage::GBModPage, ggst_path, registry};
+use crate::{ensure_sig_file, gamebanana::models::modpage::GBModPage, ggst_path, registry};
 
 use anyhow::Result;
 use log::{info, trace};
@@ -109,10 +109,9 @@ impl Mod {
 
     pub fn stage(&mut self) -> Result<()> {
         info!("Staging {}", self.name);
-        dircpy::copy_dir(
-            &self.path,
-            ggst_path().unwrap_or_default().join(self.id.to_string()),
-        )?;
+        let dest = ggst_path().unwrap_or_default().join(self.id.to_string());
+        dircpy::copy_dir(&self.path, &dest)?;
+        ensure_sig_file(&dest)?;
         self.staged = true;
         Ok(())
     }

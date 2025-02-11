@@ -1,9 +1,9 @@
 use directories::{ProjectDirs, UserDirs};
-use log::trace;
+use log::{trace, warn};
 use std::{
     fs,
     io::{self, Result},
-    path,
+    path::{self},
 };
 
 pub const SUBDIR_NAME: &str = "ggmod";
@@ -56,6 +56,42 @@ pub fn ggst_path() -> Result<path::PathBuf> {
     fs::DirBuilder::new().recursive(true).create(&path)?;
     trace!("Found path {:?} for steam root", path);
     Ok(path)
+}
+
+pub fn game_sig_file() -> Result<path::PathBuf> {
+    Ok(ggst_path()?
+        .parent()
+        .unwrap()
+        .join("pakchunk0-WindowsNoEditor.sig"))
+}
+
+pub fn ensure_sig_file(path: &path::Path) -> Result<()> {
+    let has_sig = path.read_dir()?.any(|entry| {
+        entry.is_ok_and(|entry| entry.path().extension().is_some_and(|ext| ext == "sig"))
+    });
+    let name = path.read_dir()?.find(|entry| {
+        entry
+            .as_ref()
+            .is_ok_and(|entry| entry.path().extension().is_some_and(|ext| ext == "pak"))
+    });
+    trace!(
+        "Have sig in {path:?}: {has_sig}, have name: {}",
+        name.is_some()
+    );
+    if !has_sig && name.is_some() {
+        trace!(
+            "Copy {:?} to {:?}",
+            game_sig_file()?,
+            name.as_ref().unwrap().as_ref().unwrap().path()
+        );
+        fs::copy(
+            game_sig_file()?,
+            name.unwrap().unwrap().path().with_extension("sig"),
+        )?;
+    } else if !has_sig && name.is_none() {
+        warn!("Have no .sig in {path:?} but also no .pak");
+    }
+    Ok(())
 }
 
 pub fn registry() -> Result<path::PathBuf> {
