@@ -2,7 +2,7 @@ use std::{fs, io, path};
 
 use anyhow::Result;
 use compress_tools::{uncompress_archive, Ownership};
-use log::{debug, info, trace};
+use log::{debug, info, trace, warn};
 use ratatui::widgets::Row;
 use serde::{Deserialize, Serialize};
 use unrar::Archive;
@@ -36,27 +36,28 @@ impl GBFile {
         let dir = file.with_extension("");
         if dir.exists() && dir.is_dir() {
             trace!("Mod already exists, doing nothing");
-            Ok(dir)
         } else {
             self.download_to(&file).await?;
-            let src = fs::File::open(&file)?;
             debug!("Archive {file:?} attempting decompress to {dir:?}");
             if let Some(ext) = file.extension() {
                 if ext == "rar" {
-                    let mut archive = Archive::new(&file).open_for_processing()?;
+                    let mut archive = Archive::new(&file).open_for_processing().unwrap();
                     while let Some(header) = archive.read_header()? {
                         archive = if header.entry().is_file() {
-                            header.extract_to(dir.clone())?
+                            header.extract_with_base(&dir)?
                         } else {
                             header.skip()?
                         };
                     }
                 } else {
+                    let src = fs::File::open(&file)?;
                     uncompress_archive(src, &dir, Ownership::Preserve)?;
                 }
+            } else {
+                warn!("Extentionless archive, wtf: {file:?}");
             }
-            Ok(dir)
         }
+        Ok(dir)
     }
 }
 
