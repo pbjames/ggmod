@@ -56,6 +56,7 @@ pub fn ggst_path() -> Result<path::PathBuf> {
     fs::DirBuilder::new().recursive(true).create(&path)?;
     trace!("Found path {:?} for steam root", path);
     Ok(path)
+    // hi
 }
 
 pub fn game_sig_file() -> Result<path::PathBuf> {
