@@ -59,10 +59,15 @@ pub fn ggst_path() -> Result<path::PathBuf> {
 }
 
 pub fn game_sig_file() -> Result<path::PathBuf> {
-    Ok(ggst_path()?
+    let path = ggst_path()?
         .parent()
         .unwrap()
-        .join("pakchunk0-WindowsNoEditor.sig"))
+        .join("pakchunk0-WindowsNoEditor.sig");
+    if path.exists() && path.is_file() {
+        Ok(path)
+    } else {
+        Err(not_found("No game signature, GGST is installed right?"))
+    }
 }
 
 pub fn ensure_sig_file(path: &path::Path) -> Result<()> {
