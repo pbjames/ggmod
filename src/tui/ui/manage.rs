@@ -8,7 +8,7 @@ use ratatui::{
 use crate::tui::app::{App, View, ViewDir, Window};
 
 pub fn manage_view(frame: &mut Frame, app: &App, area: Rect) {
-    let header = Row::new(vec!["Name", "Character", "Description"]);
+    let header = Row::new(vec!["Name", "Character", "Variant"]);
     let widths = [
         Constraint::Length(35),
         Constraint::Length(20),

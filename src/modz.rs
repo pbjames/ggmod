@@ -87,6 +87,7 @@ pub struct Mod {
     pub id: usize,
     pub character: String,
     path: path::PathBuf,
+    pub variant: String,
     pub name: String,
     pub description: String,
     pub staged: bool,
@@ -100,6 +101,7 @@ impl Mod {
             character: gbmod.category.name.clone(),
             path: gbmod.download_file(idx).await?,
             name: gbmod.name,
+            variant: gbmod.files[idx].file.clone(),
             description: gbmod.description,
             staged: false,
             is_nsfw: gbmod.is_nsfw,
@@ -129,7 +131,7 @@ impl From<Mod> for Row<'_> {
         let row = Row::new(vec![
             value.name.clone(),
             value.character.clone(),
-            value.description.clone(),
+            value.variant.clone(),
         ]);
         if value.is_nsfw {
             row.bg(Color::LightRed)
