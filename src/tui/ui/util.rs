@@ -1,10 +1,10 @@
-use core::fmt::Debug;
-
 use ratatui::{
+    layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Style},
     text::Span,
     widgets::Block,
 };
+use std::fmt::Debug;
 use strum::IntoEnumIterator;
 
 use crate::tui::{
@@ -36,9 +36,4 @@ where
             }))
         })
         .collect()
-}
-
-pub fn image_support() -> bool {
-    // TODO: Finish this
-    false
 }

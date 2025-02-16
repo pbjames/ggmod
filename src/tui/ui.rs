@@ -58,20 +58,9 @@ fn side_render(frame: &mut Frame, app: &mut App, area: Rc<[Rect]>) {
 
 fn view_render(frame: &mut Frame, app: &mut App, area: Rc<[Rect]>) {
     search_bar(frame, app, area[0]);
-    let browse_and_gallery = Layout::default()
-        .direction(Direction::Vertical)
-        .constraints([Constraint::Length(30), Constraint::Fill(1)])
-        .split(area[1]);
     match app.view {
         View::Manage(_) => manage_view(frame, app, area[1]),
-        View::Browse => {
-            if image_support() {
-                browse_view(frame, app, browse_and_gallery[0]);
-                //gallery(frame, app, browse_and_gallery[1]).await;
-            } else {
-                browse_view(frame, app, area[1]);
-            }
-        }
+        View::Browse => browse_view(frame, app, area[1]),
     }
 }
 
