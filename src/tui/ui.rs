@@ -1,5 +1,6 @@
 mod util;
 use gallery::try_draw_gallery;
+use throbber::try_throbber;
 //use gallery::gallery;
 use util::*;
 mod browse;
@@ -10,6 +11,7 @@ mod manage;
 mod popup;
 mod search;
 mod section;
+mod throbber;
 
 use crate::tui::ui::help::help_window;
 use std::rc::Rc;
@@ -58,6 +60,7 @@ fn side_render(frame: &mut Frame, app: &mut App, area: Rc<[Rect]>) {
 
 fn view_render(frame: &mut Frame, app: &mut App, area: Rc<[Rect]>) {
     search_bar(frame, app, area[0]);
+    try_throbber(frame, app, area[0]);
     match app.view {
         View::Manage(_) => manage_view(frame, app, area[1]),
         View::Browse => browse_view(frame, app, area[1]),

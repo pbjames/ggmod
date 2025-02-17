@@ -5,6 +5,7 @@ use log::info;
 use ratatui::widgets::TableState;
 use ratatui_image::{picker::Picker, protocol::StatefulProtocol};
 use strum::{EnumIter, IntoEnumIterator};
+use throbber_widgets_tui::ThrobberState;
 
 use crate::{
     gamebanana::{
@@ -55,6 +56,7 @@ pub struct App {
     pub window: CyclicState<WindowIter, Window>,
     pub sort: CyclicState<FeedFilterIter, FeedFilter>,
     pub image_states: IndexMap<PathBuf, RefCell<StatefulProtocol>>,
+    pub throbber_state: Option<ThrobberState>,
 }
 
 impl App {
@@ -74,9 +76,14 @@ impl App {
             page: 0,
             gallery_page: 0,
             image_states: IndexMap::new(),
+            throbber_state: None,
         };
         this.reregister();
         this
+    }
+
+    pub fn throb(&mut self) {
+        self.throbber_state.iter_mut().for_each(|s| s.calc_next());
     }
 
     pub async fn open_popup(&mut self, entry: GBSearchEntry) {
