@@ -1,4 +1,4 @@
-use std::{cell::RefCell, path::PathBuf};
+use std::{cell::RefCell, path::PathBuf, thread::yield_now};
 
 use indexmap::IndexMap;
 use log::info;
@@ -207,8 +207,10 @@ impl App {
     }
 
     pub async fn search(&mut self) -> Result<()> {
-        // TODO: Make page size = term height
-        match self.view {
+        //TODO: we probably need message passing
+        self.throbber_state = Some(ThrobberState::default());
+        info!("START THROBBING, need THROB");
+        let res = match self.view {
             View::Manage(_) => Ok(()),
             View::Browse => {
                 self.online_items
@@ -220,7 +222,10 @@ impl App {
                     )
                     .await
             }
-        }
+        };
+        info!("STOP THROBBING");
+        self.throbber_state.take();
+        res
     }
 
     pub fn help_text(&self) -> &str {

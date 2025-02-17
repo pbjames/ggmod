@@ -1,9 +1,11 @@
 use crate::tui::app::App;
+use log::info;
 use ratatui::layout::Margin;
 use ratatui::{layout::Rect, Frame};
 
 pub fn try_throbber(frame: &mut Frame, app: &mut App, area: Rect) {
     if let Some(state) = &mut app.throbber_state {
+        info!("THROB");
         let right = area
             .inner(Margin {
                 horizontal: 1,
@@ -24,7 +26,7 @@ pub fn try_throbber(frame: &mut Frame, app: &mut App, area: Rect) {
                     .fg(ratatui::style::Color::Red)
                     .add_modifier(ratatui::style::Modifier::BOLD),
             )
-            .throbber_set(throbber_widgets_tui::CLOCK)
+            .throbber_set(throbber_widgets_tui::ASCII)
             .use_type(throbber_widgets_tui::WhichUse::Spin);
         frame.render_stateful_widget(full, rect, state);
         app.throb();

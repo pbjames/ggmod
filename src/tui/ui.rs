@@ -1,5 +1,6 @@
 mod util;
 use gallery::try_draw_gallery;
+use log::info;
 use throbber::try_throbber;
 //use gallery::gallery;
 use util::*;
@@ -60,6 +61,7 @@ fn side_render(frame: &mut Frame, app: &mut App, area: Rc<[Rect]>) {
 
 fn view_render(frame: &mut Frame, app: &mut App, area: Rc<[Rect]>) {
     search_bar(frame, app, area[0]);
+    info!("Calling on throb");
     try_throbber(frame, app, area[0]);
     match app.view {
         View::Manage(_) => manage_view(frame, app, area[1]),
