@@ -5,6 +5,7 @@ use ratatui::{
     prelude::Backend,
     Terminal,
 };
+use throbber_widgets_tui::ThrobberState;
 use tokio::sync::{broadcast::Receiver, Mutex};
 
 use crate::modz::LocalCollection;
@@ -36,7 +37,9 @@ async fn event_loop(app: Am<App>, term: Termination, mut rx_term: Receiver<usize
             break;
         }
         let mut appref = app.lock().await;
-        handle_event(&mut appref, &term).await
+        appref.throbber_state = Some(ThrobberState::default());
+        handle_event(&mut appref, &term).await;
+        appref.throbber_state.take();
     }
 }
 
@@ -103,11 +106,19 @@ async fn handle_event(app: &mut App, term: &Termination) {
                         KeyCode::Char('L') => app.toggle_view(),
                         KeyCode::Char('h') | KeyCode::Left => match app.view {
                             View::Manage(_) => app.toggle_sides(),
-                            View::Browse => app.gallery_prev(),
+                            View::Browse => {
+                                if !app.image_states.is_empty() {
+                                    app.gallery_prev()
+                                }
+                            }
                         },
                         KeyCode::Char('l') | KeyCode::Right => match app.view {
                             View::Manage(_) => app.toggle_sides(),
-                            View::Browse => app.gallery_next(),
+                            View::Browse => {
+                                if !app.image_states.is_empty() {
+                                    app.gallery_next()
+                                }
+                            }
                         },
                         KeyCode::Char('j') | KeyCode::Down => app.next(),
                         KeyCode::Char('k') | KeyCode::Up => app.previous(),

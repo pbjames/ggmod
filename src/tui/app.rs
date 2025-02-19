@@ -1,4 +1,4 @@
-use std::{cell::RefCell, path::PathBuf, thread::yield_now};
+use std::{cell::RefCell, path::PathBuf};
 
 use indexmap::IndexMap;
 use log::info;
@@ -208,7 +208,7 @@ impl App {
 
     pub async fn search(&mut self) -> Result<()> {
         //TODO: we probably need message passing
-        self.throbber_state = Some(ThrobberState::default());
+        //self.throbber_state = Some(ThrobberState::default());
         info!("START THROBBING, need THROB");
         let res = match self.view {
             View::Manage(_) => Ok(()),
@@ -224,7 +224,7 @@ impl App {
             }
         };
         info!("STOP THROBBING");
-        self.throbber_state.take();
+        //self.throbber_state.take();
         res
     }
 
